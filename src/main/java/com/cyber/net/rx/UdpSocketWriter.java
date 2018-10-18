@@ -4,20 +4,20 @@
  * and open the template in the editor.
  */
 
-package com.cyber.net;
+package com.cyber.net.rx;
 
 import com.cyber.net.dto.RawPacket;
-import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketAddress;
 
 /**
  *
  * @author CyberManic
  */
-public class UdpSocketWriter implements IRxConsumer<RawPacket>{
+public class UdpSocketWriter implements IFlowConsumer<RawPacket>{
 
     private final DatagramSocket localSocket;
     
@@ -29,18 +29,22 @@ public class UdpSocketWriter implements IRxConsumer<RawPacket>{
         return localSocket;
     }
         
-    public void send(RawPacket packet) throws IOException{
-        DatagramPacket p = new DatagramPacket(packet.getData(), packet.getData().length, packet.getRemoteSocketAddress());
-        localSocket.send(p);
+    public void send(RawPacket packet){
+        send(packet.getData(), packet.getRemoteSocketAddress());
     }
-        
-    @Override
-    public void onNext(RawPacket t) {
+
+    public void send(byte[] data, SocketAddress remoteSocketAddress){
         try{
-            send(t);
+            DatagramPacket p = new DatagramPacket(data, data.length, remoteSocketAddress);
+            localSocket.send(p);
         }catch(IOException e){
             onError(e);
         }
+    }
+    
+    @Override
+    public void onNext(RawPacket p) {
+        send(p);
     }
 
     @Override public void onError(Throwable e) {

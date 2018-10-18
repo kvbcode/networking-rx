@@ -5,6 +5,8 @@
  */
 package com.cyber.net;
 
+import com.cyber.net.rx.UdpSocketWriter;
+import com.cyber.net.rx.UdpSocketReader;
 import com.cyber.net.dto.RawPacket;
 import io.reactivex.observers.TestObserver;
 import java.io.IOException;
@@ -41,7 +43,7 @@ public class UdpSocketReaderTest {
     
     @After
     public void tearDown() {
-        reader.shutdown();
+        reader.close();
         serverSocket.close();
     }
 
@@ -49,7 +51,7 @@ public class UdpSocketReaderTest {
     public void testPacket() throws IOException{
         System.out.println("testPacket()");
         
-        reader.outputSlot()
+        reader.getFlow()
             .map(p -> new String(p.getData()))
             .doOnNext(s -> System.out.println( "received: " + s ))
             .subscribeWith(testObs);

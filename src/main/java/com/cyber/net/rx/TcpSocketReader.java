@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.cyber.net;
+package com.cyber.net.rx;
 
 import com.cyber.net.dto.RawPacket;
 import io.reactivex.Observable;

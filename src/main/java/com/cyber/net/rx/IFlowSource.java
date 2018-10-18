@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.cyber.net;
+package com.cyber.net.rx;
 
 import io.reactivex.Observable;
 
@@ -11,8 +11,8 @@ import io.reactivex.Observable;
  *
  * @author CyberManic
  */
-public interface IRxProducer<T> {
+public interface IFlowSource<T> {
     
-    public Observable<T> outputSlot();
+    public Observable<T> getFlow();
     
 }

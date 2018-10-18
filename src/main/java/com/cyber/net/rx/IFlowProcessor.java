@@ -3,18 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.cyber.net;
-
-import java.net.SocketAddress;
+package com.cyber.net.rx;
 
 /**
  *
  * @author CyberManic
  */
-public interface IPacket {
-    
-    public SocketAddress getRemoteSocketAddress();       
-    
-    public byte[] getData();
+public interface IFlowProcessor<I,O> extends IFlowConsumer<I>, IFlowSource<O>{
     
 }

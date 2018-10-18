@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.cyber.net.impl;
+package com.cyber.net.rx.impl;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;

@@ -3,18 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.cyber.net;
-
-import io.reactivex.subjects.Subject;
+package com.cyber.net.rx;
 
 /**
  *
  * @author CyberManic
  */
-public interface ISession<T> extends IRxIOElement<T>{
+public interface IConnection extends IFlowProcessor<byte[], byte[]>{
     
-    public int getId();
+    public void send(byte[] data);
     
-    public boolean isAlive();
-        
 }

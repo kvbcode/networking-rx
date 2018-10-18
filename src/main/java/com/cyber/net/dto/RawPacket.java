@@ -6,7 +6,6 @@
 
 package com.cyber.net.dto;
 
-import com.cyber.net.IPacket;
 import java.net.DatagramPacket;
 import java.net.SocketAddress;
 
@@ -14,7 +13,7 @@ import java.net.SocketAddress;
  *
  * @author CyberManic
  */
-public class RawPacket implements IPacket{
+public class RawPacket{
     private final SocketAddress remoteSocketAddress;
     private final byte[] data;
     
@@ -46,12 +45,10 @@ public class RawPacket implements IPacket{
         return new RawPacket( dg.getSocketAddress(), dg.getData(), dg.getOffset(), dg.getLength() );
     }
     
-    @Override
     public SocketAddress getRemoteSocketAddress(){        
         return remoteSocketAddress;
     }
     
-    @Override
     public byte[] getData(){
         return data;
     }

@@ -3,18 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.cyber.net;
+package com.cyber.net.rx.protocol;
 
-import io.reactivex.subjects.Subject;
+import com.cyber.net.rx.IConnection;
+import com.cyber.net.rx.IFlowProcessor;
 
 /**
  *
  * @author CyberManic
  */
-public interface IRxIOElement<T> {
+public interface IProtocol extends IFlowProcessor<byte[],byte[]>{
     
-    public Subject<T> inputSlot();
-    
-    public Subject<T> outputSlot();
-
 }
