@@ -6,11 +6,14 @@
 package com.cyber.net.rx.impl;
 
 import com.cyber.net.rx.protocol.EchoProtocol;
+import com.cyber.net.rx.protocol.ProtocolFactory;
 import io.reactivex.observers.TestObserver;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  *
@@ -32,7 +35,7 @@ public class UdpServerTest {
     }
 
     @Test
-    public void testSomeMethod() throws Exception{
+    public void testSimple() throws Exception{
         TestObserver<String> testObs = new TestObserver<>();
         
         UdpServer server = new UdpServer(port);
@@ -46,12 +49,48 @@ public class UdpServerTest {
         client.send(TEST_STRING.getBytes());
         client.send(TEST_STRING.getBytes());
                 
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(50);
 
         server.close();
         
         testObs.assertValueCount(3);
         testObs.assertValueAt(2, TEST_STRING);
+    }
+    
+    @Test
+    public void testConnectionTimeout() throws Exception{
+     
+        TestObserver<String> testObs = new TestObserver<>();
+        final AtomicInteger timeoutEventCounter = new AtomicInteger(0);
+        
+        UdpServer server = new UdpServer(port);
+        server
+            //.setProtocol( EchoProtocol::new )
+            //.setOnConnectionListener( ProtocolFactory.from( EchoProtocol::new, Throwable::printStackTrace ) )
+            //.setOnConnectionListener( ProtocolFactory.from( EchoProtocol::new, System.err::println ) )
+            .setOnConnectionListener( ProtocolFactory.from( EchoProtocol::new, err -> timeoutEventCounter.incrementAndGet() ) )
+            .setTimeout(250)
+            .start();
+        
+        UdpTransport client = UdpTransport.connect("127.0.0.1", port);
+        client.getFlow().map(p -> new String(p.getData())).subscribe(System.out::println);
+        client.getFlow().map(p -> new String(p.getData())).subscribeWith(testObs);
+        
+        client.send(TEST_STRING.getBytes());
+        client.send(TEST_STRING.getBytes());
+                
+        TimeUnit.MILLISECONDS.sleep(1000);
+
+        client.send(TEST_STRING.getBytes());
+
+        TimeUnit.MILLISECONDS.sleep(1000);
+
+        server.close();
+        
+        testObs.assertValueCount(3);
+        testObs.assertValueAt(2, TEST_STRING);        
+                
+        assertTrue( timeoutEventCounter.get() == 2 );
     }
     
 }

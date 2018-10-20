@@ -32,11 +32,7 @@ public class UdpTransport implements IFlowProcessor<RawPacket,RawPacket>{
     
     private UdpTransport(DatagramSocket localSocket, SocketAddress remoteSocketAddress) throws SocketException{
 
-        if (localSocket!=null){
-            this.localSocket = localSocket;
-        }else{
-            this.localSocket = new DatagramSocket();            
-        }
+        this.localSocket = localSocket;
             
         reader = new UdpSocketReader( this.localSocket );
         writer = new UdpSocketWriter( this.localSocket );
@@ -52,19 +48,19 @@ public class UdpTransport implements IFlowProcessor<RawPacket,RawPacket>{
     }
 
     public static UdpTransport listen(DatagramSocket localSocket) throws SocketException{
-        return new UdpTransport(localSocket, null);
+        return new UdpTransport( localSocket, null );
     }
 
     public static UdpTransport listen(int port) throws SocketException{
-        return new UdpTransport(new DatagramSocket(port), null);
+        return new UdpTransport( new DatagramSocket(port), null);
     }
     
     public static UdpTransport connect(SocketAddress remoteSocketAddress) throws SocketException{
-        return new UdpTransport(null, remoteSocketAddress);
+        return new UdpTransport( new DatagramSocket(), remoteSocketAddress );
     }
 
     public static UdpTransport connect(String host, int port) throws SocketException{
-        return new UdpTransport( null, new InetSocketAddress( host, port ) );
+        return new UdpTransport( new DatagramSocket(), new InetSocketAddress( host, port ) );
     }
             
     public UdpSocketWriter getWriter(){

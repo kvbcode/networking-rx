@@ -8,8 +8,8 @@ package com.cyber.net.rx.protocol;
 
 import com.cyber.net.rx.IConnection;
 import com.cyber.net.rx.IFlowConsumer;
-import com.cyber.net.rx.IFlowProcessor;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -18,25 +18,40 @@ import java.util.function.Supplier;
  */
 public class ProtocolFactory implements IFlowConsumer<IConnection>{
 
-    private final Supplier<IProtocol> supplier;
+    private static final Consumer<Throwable> DEFAULT_PROTOCOL_ERROR_HANDLER = System.err::println;
     
-    public ProtocolFactory(Supplier<IProtocol> protocolSupplier){
-        this.supplier = protocolSupplier;
+    private final Supplier<IProtocol> protocolSupplier;
+    private final Consumer<Throwable> protocolErrorHandler;    
+    
+    private ProtocolFactory( Supplier<IProtocol> protocolSupplier, Consumer<Throwable> protocolErrorHandler ){
+        this.protocolSupplier = protocolSupplier;
+        this.protocolErrorHandler = protocolErrorHandler;
     }
 
+    public static ProtocolFactory from( Supplier<IProtocol> protocolSupplier, Consumer<Throwable> protocolErrorHandler ){
+        return new ProtocolFactory(protocolSupplier, protocolErrorHandler);
+    }
+    
+    public static ProtocolFactory from( Supplier<IProtocol> protocolSupplier ){
+        return new ProtocolFactory( protocolSupplier, DEFAULT_PROTOCOL_ERROR_HANDLER );
+    }
+    
     public IProtocol get(){
-        return supplier.get();
+        return protocolSupplier.get();
     }
 
     @Override
     public void onNext(IConnection conn) {        
-        IProtocol proto = get();
-        
-        conn.getFlow().subscribeWith(proto);
-        proto.getFlow().subscribe(outData -> conn.send(outData));
-        
+        setup( get(), conn);        
     }
-
+    
+    public void setup(IProtocol proto, IConnection conn){
+        conn.getFlow().subscribeWith(proto);
+        proto.getFlow().subscribe(
+            outData -> conn.send(outData),
+            err -> protocolErrorHandler.accept(err));                
+    }
+        
     @Override public void onSubscribe(Disposable d) {}
 
     @Override public void onError(Throwable e) {}

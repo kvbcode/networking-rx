@@ -13,4 +13,6 @@ public interface IConnection extends IFlowProcessor<byte[], byte[]>{
     
     public void send(byte[] data);
     
+    public long getLastActivityTime();
+    
 }

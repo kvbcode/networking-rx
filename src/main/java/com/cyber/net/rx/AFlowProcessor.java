@@ -19,11 +19,11 @@ abstract class AFlowProcessor<I,O> implements IFlowProcessor<I,O>{
 
     protected final Subject<O> flow = PublishSubject.create();
     
-    @Override public void onSubscribe(Disposable d) {}
+    @Override public void onSubscribe(Disposable d) { flow.onSubscribe(d); }
 
-    @Override public void onError(Throwable e) { e.printStackTrace(); }
+    @Override public void onError(Throwable e) { flow.onError(e); }
 
-    @Override public void onComplete() {}
+    @Override public void onComplete() { flow.onComplete(); }
 
     @Override public Observable<O> getFlow() { return flow; };
 

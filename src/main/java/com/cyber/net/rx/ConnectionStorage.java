@@ -6,13 +6,16 @@
 
 package com.cyber.net.rx;
 
+import io.reactivex.Observable;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.net.ConnectException;
 
 /**
  *
  * @author CyberManic
  */
-public class ConnectionStorage<T> {
+public class ConnectionStorage<T>{
 
     private final ConcurrentHashMap<T, IConnection> map;
     
@@ -29,7 +32,16 @@ public class ConnectionStorage<T> {
     }
     
     public void remove(T key){
-        map.remove(key);
+        IConnection conn = map.remove(key);
+        conn.onError(new ConnectException(conn + " timeout"));
+    }
+
+    public Observable<Entry<T, IConnection>> iterate(){
+        return Observable.fromIterable(map.entrySet());
     }
     
+    public void close(){
+        iterate()
+            .subscribe(e -> e.getValue().onComplete());
+    }
 }

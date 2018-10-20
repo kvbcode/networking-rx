@@ -34,7 +34,7 @@ public class EchoProtocol implements IProtocol{
     }
 
     @Override public void onNext(byte[] data) {
-        System.out.println("proto.input: " + data + " [" + data.length + "]");
+        System.out.println("proto.echo.input: " + data + " [" + data.length + "]");
         flow.onNext(data);
     }
 
@@ -43,12 +43,13 @@ public class EchoProtocol implements IProtocol{
     }
 
     @Override public void onError(Throwable ex) {
-        System.out.println("proto.echo.error: " + ex.toString());
-        ex.printStackTrace();
+        System.out.println("proto.echo.input.error: " + ex.toString());
+        flow.onError(ex);
     }
 
     @Override public void onComplete() {
-        System.out.println("proto.echo.in: terminated");
+        System.out.println("proto.echo.input: completed");
+        flow.onComplete();
     }
     
 }
