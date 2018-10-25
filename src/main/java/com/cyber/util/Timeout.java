@@ -8,6 +8,7 @@ package com.cyber.util;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.lang.IllegalArgumentException;
 
 /**
  *
@@ -18,6 +19,7 @@ public class Timeout implements Predicate<Long>{
     private final long timeoutNanos;
     
     public Timeout(long milliseconds){
+        if (milliseconds < 0) throw new IllegalArgumentException("timeout value must be positive");
         timeoutNanos = TimeUnit.MILLISECONDS.toNanos(milliseconds);
     }
 

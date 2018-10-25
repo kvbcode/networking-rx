@@ -37,7 +37,7 @@ public class UdpTransport implements IFlowProcessor<RawPacket,RawPacket>{
         reader = new UdpSocketReader( this.localSocket );
         writer = new UdpSocketWriter( this.localSocket );
 
-        readerThread = new Thread(reader, "UdpTransport");        
+        readerThread = new Thread(reader, "UdpTransportSocketReader");        
         readerThread.start();        
         
         if (remoteSocketAddress!=null){

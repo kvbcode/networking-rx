@@ -36,10 +36,13 @@ public class UdpServerTest {
 
     @Test
     public void testSimple() throws Exception{
+        System.out.println("\ntestSimple()");
+        
         TestObserver<String> testObs = new TestObserver<>();
         
         UdpServer server = new UdpServer(port);
-        server.setProtocol( EchoProtocol::new ).start();
+        server.observeConnection().subscribeWith( ProtocolFactory.from( EchoProtocol::new ) );        
+
         
         UdpTransport client = UdpTransport.connect("127.0.0.1", port);
         client.getFlow().map(p -> new String(p.getData())).subscribe(System.out::println);
@@ -59,18 +62,16 @@ public class UdpServerTest {
     
     @Test
     public void testConnectionTimeout() throws Exception{
+        System.out.println("\ntestConnectionTimeout()");
      
         TestObserver<String> testObs = new TestObserver<>();
         final AtomicInteger timeoutEventCounter = new AtomicInteger(0);
         
         UdpServer server = new UdpServer(port);
         server
-            //.setProtocol( EchoProtocol::new )
-            //.setOnConnectionListener( ProtocolFactory.from( EchoProtocol::new, Throwable::printStackTrace ) )
-            //.setOnConnectionListener( ProtocolFactory.from( EchoProtocol::new, System.err::println ) )
-            .setOnConnectionListener( ProtocolFactory.from( EchoProtocol::new, err -> timeoutEventCounter.incrementAndGet() ) )
             .setTimeout(250)
-            .start();
+            .observeConnection()
+                .subscribeWith( ProtocolFactory.from( EchoProtocol::new, err -> timeoutEventCounter.incrementAndGet() ) );
         
         UdpTransport client = UdpTransport.connect("127.0.0.1", port);
         client.getFlow().map(p -> new String(p.getData())).subscribe(System.out::println);
@@ -90,6 +91,8 @@ public class UdpServerTest {
         testObs.assertValueCount(3);
         testObs.assertValueAt(2, TEST_STRING);        
                 
+        System.out.println("timeoutEventCounter: " + timeoutEventCounter.get());
+        
         assertTrue( timeoutEventCounter.get() == 2 );
     }
     
