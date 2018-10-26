@@ -75,7 +75,8 @@ public class UdpServer{
     
     /**
      * Возвращает поток новых соединений
-     * @return 
+     * @return Observable
+     * @see UdpConnectionFactory#getFlow
      */
     public Observable<UdpConnection> observeConnection() {
         return connectionFactory.getFlow();

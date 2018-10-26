@@ -87,7 +87,7 @@ public class UdpTransport implements IFlowProcessor<RawPacket,RawPacket>{
 
     /**
      * Отправляет data на удаленный адрес, указанный при создании
-     * @param data 
+     * @param data данные для отправки клиенту
      */
     public void send(byte[] data){
         if (remoteSocketAddress!=null) onNext( new RawPacket( remoteSocketAddress, data ) );

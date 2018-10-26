@@ -46,10 +46,8 @@ public class ProtocolFactory implements IFlowConsumer<IConnection>{
     }
     
     public void setup(IProtocol proto, IConnection conn){
-        conn.getFlow().subscribeWith(proto);
-        proto.getFlow().subscribe(
-            outData -> conn.send(outData),
-            err -> protocolErrorHandler.accept(err));                
+        conn.getDownstream().subscribeWith( proto );
+        proto.getFlow().subscribeWith( conn.getUpstream() );
     }
         
     @Override public void onSubscribe(Disposable d) {}

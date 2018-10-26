@@ -5,14 +5,16 @@
  */
 package com.cyber.net.rx;
 
+import io.reactivex.subjects.Subject;
+
 /**
  *
  * @author CyberManic
  */
-public interface IConnection extends IFlowDuplex<byte[]>{
+public interface IFlowDuplex<T> {
     
-    public long getLastActivityTime();
+    Subject<T> getDownstream();
     
-    public void close();
+    Subject<T> getUpstream();
     
 }

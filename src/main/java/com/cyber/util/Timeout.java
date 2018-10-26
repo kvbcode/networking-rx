@@ -24,26 +24,23 @@ public class Timeout implements Predicate<Long>{
     }
 
     /**
-     * Return timeout value in milliseconds
-     * @return 
+     * @return timeout value in milliseconds
      */
     public long getTimeoutValue(){
         return TimeUnit.NANOSECONDS.toMillis(timeoutNanos);
     }
     
     /**
-     * Return true is timeout
-     * @param lastActivityNanos
-     * @return 
+     * @param lastActivityNanos last activity time
+     * @return true is timeout
      */
     public boolean isTimeout(long lastActivityNanos){
         return System.nanoTime() - lastActivityNanos > timeoutNanos;
     };
 
     /**
-     * Return true if timeout
-     * @param lastActivityNanos
-     * @return 
+     * @param lastActivityNanos last activity time
+     * @return true if timeout
      */
     @Override
     public boolean test(Long lastActivityNanos) {

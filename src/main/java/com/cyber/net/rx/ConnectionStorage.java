@@ -33,7 +33,7 @@ public class ConnectionStorage<T>{
     
     public void remove(T key){
         IConnection conn = map.remove(key);
-        conn.onError(new ConnectException(conn + " timeout"));
+        conn.close();
     }
 
     public Observable<Entry<T, IConnection>> iterate(){
@@ -42,6 +42,6 @@ public class ConnectionStorage<T>{
     
     public void close(){
         iterate()
-            .subscribe(e -> e.getValue().onComplete());
+            .subscribe(e -> e.getValue().close());
     }
 }

@@ -37,7 +37,7 @@ public class UdpConnectionDispatcher implements IFlowConsumer<RawPacket>{
                     return c;
             });        
                 
-        conn.onNext(p.getData());
+        conn.getDownstream().onNext(p.getData());
     }
 
     @Override public void onSubscribe(Disposable d) {}
