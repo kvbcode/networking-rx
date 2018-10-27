@@ -5,6 +5,7 @@
  */
 package com.cyber.net.rx.impl;
 
+import com.cyber.net.rx.UdpConnection;
 import com.cyber.net.rx.protocol.EchoProtocol;
 import com.cyber.net.rx.protocol.ProtocolFactory;
 import io.reactivex.observers.TestObserver;
@@ -35,8 +36,8 @@ public class UdpServerTest {
     }
 
     @Test
-    public void testSimple() throws Exception{
-        System.out.println("\ntestSimple()");
+    public void testSimpleEcho() throws Exception{
+        System.out.println("\ntestSimpleEcho()");
         
         TestObserver<String> testObs = new TestObserver<>();
         
@@ -65,13 +66,14 @@ public class UdpServerTest {
         System.out.println("\ntestConnectionTimeout()");
      
         TestObserver<String> testObs = new TestObserver<>();
-        final AtomicInteger timeoutEventCounter = new AtomicInteger(0);
+        final AtomicInteger newConnectionCounter = new AtomicInteger(0);
         
         UdpServer server = new UdpServer(port);
         server
-            .setTimeout(250)
+            .setTimeout(100)
             .observeConnection()
-                .subscribeWith( ProtocolFactory.from( EchoProtocol::new, err -> timeoutEventCounter.incrementAndGet() ) );
+                .doOnNext(conn -> newConnectionCounter.incrementAndGet())
+                .subscribeWith( ProtocolFactory.from( EchoProtocol::new ) );
         
         UdpTransport client = UdpTransport.connect("127.0.0.1", port);
         client.getFlow().map(p -> new String(p.getData())).subscribe(System.out::println);
@@ -80,20 +82,46 @@ public class UdpServerTest {
         client.send(TEST_STRING.getBytes());
         client.send(TEST_STRING.getBytes());
                 
-        TimeUnit.MILLISECONDS.sleep(1000);
+        TimeUnit.MILLISECONDS.sleep(500);
 
         client.send(TEST_STRING.getBytes());
 
-        TimeUnit.MILLISECONDS.sleep(1000);
+        TimeUnit.MILLISECONDS.sleep(500);
 
         server.close();
         
         testObs.assertValueCount(3);
         testObs.assertValueAt(2, TEST_STRING);        
                 
-        System.out.println("timeoutEventCounter: " + timeoutEventCounter.get());
+        System.out.println("newConnectionCounter: " + newConnectionCounter.get());
         
-        assertTrue( timeoutEventCounter.get() == 2 );
+        assertTrue( newConnectionCounter.get() == 2 );
+    }
+    
+    @Test
+    public void testClientServerEcho() throws Exception{
+        System.out.println("\ntestClientServerEcho()");
+
+        TestObserver<String> testObs = new TestObserver<>();
+        
+        UdpServer server = new UdpServer(port);
+        server.observeConnection()
+            .doOnNext(data -> System.out.println("server.in: " + data))
+            .subscribe( conn -> conn.getDownstream().subscribeWith( conn.getUpstream() ) );        
+        
+        UdpConnection conn = UdpClient.connect("127.0.0.1", port);
+        conn.getDownstream().subscribe(data -> System.out.println("client.in: " + data));
+        conn.getDownstream().map(b -> new String(b)).subscribeWith(testObs);
+        
+        conn.getUpstream().onNext(TEST_STRING.getBytes());
+        conn.getUpstream().onNext(TEST_STRING.getBytes());
+        conn.getUpstream().onNext(TEST_STRING.getBytes());
+        
+        TimeUnit.MILLISECONDS.sleep(50);
+        server.close();
+
+        testObs.awaitCount(3);
+        testObs.assertValueAt(0, TEST_STRING);
     }
     
 }

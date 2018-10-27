@@ -24,6 +24,10 @@ public class UdpClient {
     public static UdpConnection connect(SocketAddress remoteSocketAddress) throws SocketException{
         UdpTransport udp = UdpTransport.connect( remoteSocketAddress );        
         UdpConnection conn = new UdpConnection( udp.getWriter(), remoteSocketAddress );
+
+        udp.getFlow()
+            .map(p -> p.getData())
+            .subscribeWith(conn.getDownstream());
         
         return conn;
     }

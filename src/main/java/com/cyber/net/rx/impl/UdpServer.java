@@ -53,7 +53,11 @@ public class UdpServer{
     public UdpServer(int port) throws SocketException{
         this(new DatagramSocket(port));
     }
-        
+
+    public ConnectionStorage<SocketAddress> getConnectionStorage(){
+        return connectionStorage;
+    }
+    
     public UdpServer setTimeout(long milliseconds){
         connectionTimeout = new Timeout(milliseconds);        
 
