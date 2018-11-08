@@ -30,6 +30,8 @@ public class UdpTransport implements IFlowProcessor<RawPacket,RawPacket>{
     private SocketAddress remoteSocketAddress;
     private final Thread readerThread;
     
+    private final Observable<RawPacket> readerFlow;
+    
     private UdpTransport(DatagramSocket localSocket, SocketAddress remoteSocketAddress) throws SocketException{
 
         this.localSocket = localSocket;
@@ -37,8 +39,11 @@ public class UdpTransport implements IFlowProcessor<RawPacket,RawPacket>{
         reader = new UdpSocketReader( this.localSocket );
         writer = new UdpSocketWriter( this.localSocket );
 
-        readerThread = new Thread(reader, "UdpTransportSocketReader");        
-        readerThread.start();        
+        readerThread = new Thread(reader, "UdpTransportSocketReader");                
+                
+        readerFlow = reader.getFlow()
+            .doOnSubscribe(d -> readerThread.start())
+            .share();        
         
         if (remoteSocketAddress!=null){
             this.remoteSocketAddress = remoteSocketAddress;
@@ -77,7 +82,7 @@ public class UdpTransport implements IFlowProcessor<RawPacket,RawPacket>{
         
     public void close(){   
         reader.close();
-        localSocket.close();
+        if (!localSocket.isClosed()) localSocket.close();
     }
         
     @Override
@@ -99,7 +104,7 @@ public class UdpTransport implements IFlowProcessor<RawPacket,RawPacket>{
      */
     @Override
     public Observable<RawPacket> getFlow() {
-        return reader.getFlow();
+        return readerFlow;
     }
 
     /**

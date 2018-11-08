@@ -42,7 +42,7 @@ public class UdpConnectionDispatcher implements IFlowConsumer<RawPacket>{
 
     @Override public void onSubscribe(Disposable d) {}
 
-    @Override public void onError(Throwable e) {}
+    @Override public void onError(Throwable e) { e.printStackTrace(System.err); }
 
     @Override public void onComplete() {}
 

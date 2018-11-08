@@ -66,13 +66,16 @@ public class UdpServerTest {
         System.out.println("\ntestConnectionTimeout()");
      
         TestObserver<String> testObs = new TestObserver<>();
-        final AtomicInteger newConnectionCounter = new AtomicInteger(0);
+        final AtomicInteger completedConnectionCounter = new AtomicInteger(0);
         
         UdpServer server = new UdpServer(port);
         server
             .setTimeout(100)
             .observeConnection()
-                .doOnNext(conn -> newConnectionCounter.incrementAndGet())
+                .doOnNext(conn -> conn.getDownstream()
+                    .doOnComplete( completedConnectionCounter::incrementAndGet )
+                    .subscribe()
+                )
                 .subscribeWith( ProtocolFactory.from( EchoProtocol::new ) );
         
         UdpTransport client = UdpTransport.connect("127.0.0.1", port);
@@ -82,20 +85,20 @@ public class UdpServerTest {
         client.send(TEST_STRING.getBytes());
         client.send(TEST_STRING.getBytes());
                 
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.MILLISECONDS.sleep(250);
 
         client.send(TEST_STRING.getBytes());
 
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.MILLISECONDS.sleep(250);
 
         server.close();
         
         testObs.assertValueCount(3);
         testObs.assertValueAt(2, TEST_STRING);        
                 
-        System.out.println("newConnectionCounter: " + newConnectionCounter.get());
+        System.out.println("completedConnectionCounter: " + completedConnectionCounter.get());
         
-        assertTrue( newConnectionCounter.get() == 2 );
+        assertTrue( completedConnectionCounter.get() == 2 );
     }
     
     @Test

@@ -12,7 +12,6 @@ import io.reactivex.subjects.PublishSubject;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.SocketAddress;
 import java.net.SocketException;
 
 /**
@@ -48,9 +47,7 @@ public class UdpSocketReader implements IFlowSource, Runnable{
                 flow.onNext( receiveRawPacket() );
             }
         }catch(SocketException ex){
-            // используется прерывание через закрытие сокета,
-            // поэтому игнорируем SocketException
-            flow.onComplete();
+            if (!flow.hasComplete()) flow.onError(ex);
         }catch(IOException ex){   
             flow.onError(ex);
         }finally{
@@ -58,7 +55,6 @@ public class UdpSocketReader implements IFlowSource, Runnable{
         }
     }
 
-    
     public void close(){
         shutdown = true;
         flow.onComplete();
