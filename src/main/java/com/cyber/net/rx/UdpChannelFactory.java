@@ -14,23 +14,23 @@ import java.net.SocketAddress;
  *
  * @author CyberManic
  */
-public class UdpConnectionFactory implements IFlowSource<UdpConnection>{
+public class UdpChannelFactory implements IFlowSource<UdpChannel>{
 
     private final PublishSubject flow = PublishSubject.create();
     private final UdpSocketWriter writer;
     
-    public UdpConnectionFactory(UdpSocketWriter writer){
+    public UdpChannelFactory(UdpSocketWriter writer){
         this.writer = writer;
     }
 
-    public UdpConnection get(SocketAddress remoteAddress){
-        UdpConnection conn = new UdpConnection(writer, remoteAddress);
+    public UdpChannel get(SocketAddress remoteAddress){
+        UdpChannel conn = new UdpChannel(writer, remoteAddress);
         flow.onNext(conn);
         return conn;
     }
 
     @Override
-    public Observable<UdpConnection> getFlow() {
+    public Observable<UdpChannel> getFlow() {
         return flow;
     }
     

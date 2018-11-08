@@ -18,7 +18,7 @@ import java.net.SocketException;
  *
  * @author CyberManic
  */
-public class UdpSocketReader implements IFlowSource, Runnable{
+public class UdpSocketReader implements IFlowSource<RawPacket>, Runnable{
 
     private final PublishSubject<RawPacket> flow = PublishSubject.create();
     private final DatagramSocket localSocket;

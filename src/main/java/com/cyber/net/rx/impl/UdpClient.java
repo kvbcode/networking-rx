@@ -6,7 +6,7 @@
 
 package com.cyber.net.rx.impl;
 
-import com.cyber.net.rx.UdpConnection;
+import com.cyber.net.rx.UdpChannel;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
@@ -21,9 +21,9 @@ public class UdpClient {
 
     }
 
-    public static UdpConnection connect(SocketAddress remoteSocketAddress) throws SocketException{
+    public static UdpChannel connect(SocketAddress remoteSocketAddress) throws SocketException{
         UdpTransport udp = UdpTransport.connect( remoteSocketAddress );        
-        UdpConnection conn = new UdpConnection( udp.getWriter(), remoteSocketAddress );
+        UdpChannel conn = new UdpChannel( udp.getWriter(), remoteSocketAddress );
 
         udp.getFlow()
             .map(p -> p.getData())
@@ -32,7 +32,7 @@ public class UdpClient {
         return conn;
     }
 
-    public static UdpConnection connect(String host, int port) throws SocketException{
+    public static UdpChannel connect(String host, int port) throws SocketException{
         return UdpClient.connect( new InetSocketAddress( host, port ) );        
     }
     

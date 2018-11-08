@@ -5,6 +5,7 @@
  */
 package com.cyber.net.impl;
 
+import com.cyber.net.dto.RawPacket;
 import com.cyber.net.rx.impl.UdpTransport;
 import com.cyber.net.rx.protocol.EchoProtocol;
 import io.reactivex.observers.TestObserver;
@@ -66,9 +67,10 @@ public class UdpTransportTest {
     public void testEcho() throws Exception{
         System.out.println("testEcho()");
 
-        EchoProtocol proto = new EchoProtocol();
-        server.getFlow().subscribe(p -> proto.onNext(p.getData()) );
-        server.getFlow().subscribeWith(server);        
+        EchoProtocol<RawPacket> proto = new EchoProtocol<>();
+        server.getFlow().subscribeWith(proto.getDownstream());
+        proto.getUpstream().subscribeWith(server);
+        
         
         System.out.println("server: " + server);
         System.out.println("client: " + client);
@@ -90,8 +92,8 @@ public class UdpTransportTest {
         System.out.println("testReConnect()");
         
         EchoProtocol proto = new EchoProtocol();
-        server.getFlow().subscribe(p -> proto.onNext(p.getData()) );
-        server.getFlow().subscribeWith(server);        
+        server.getFlow().subscribeWith(proto.getDownstream());
+        proto.getUpstream().subscribeWith(server);
         
         System.out.println("server: " + server);
         System.out.println("client: " + client);

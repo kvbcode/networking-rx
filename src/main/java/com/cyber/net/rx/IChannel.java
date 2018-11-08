@@ -9,7 +9,7 @@ package com.cyber.net.rx;
  *
  * @author CyberManic
  */
-public interface IConnection extends IFlowDuplex<byte[]>{
+public interface IChannel extends IFlowDuplex<byte[]>{
     
     public long getLastActivityTime();
     

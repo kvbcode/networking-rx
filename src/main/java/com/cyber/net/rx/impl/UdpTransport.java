@@ -9,7 +9,8 @@ package com.cyber.net.rx.impl;
 import com.cyber.net.rx.UdpSocketReader;
 import com.cyber.net.rx.UdpSocketWriter;
 import com.cyber.net.dto.RawPacket;
-import com.cyber.net.rx.IFlowProcessor;
+import com.cyber.net.rx.IFlowConsumer;
+import com.cyber.net.rx.IFlowSource;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import java.net.DatagramSocket;
@@ -21,7 +22,7 @@ import java.net.SocketException;
  *
  * @author CyberManic
  */
-public class UdpTransport implements IFlowProcessor<RawPacket,RawPacket>{
+public class UdpTransport implements IFlowSource<RawPacket>, IFlowConsumer<RawPacket>{
 
     private final DatagramSocket localSocket;
     private final UdpSocketReader reader;

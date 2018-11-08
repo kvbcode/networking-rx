@@ -6,17 +6,17 @@
 
 package com.cyber.net.rx.protocol;
 
-import com.cyber.net.rx.IConnection;
 import com.cyber.net.rx.IFlowConsumer;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import java.util.function.Supplier;
+import com.cyber.net.rx.IChannel;
 
 /**
  *
  * @author CyberManic
  */
-public class ProtocolFactory implements IFlowConsumer<IConnection>{
+public class ProtocolFactory implements IFlowConsumer<IChannel>{
 
     private static final Consumer<Throwable> DEFAULT_PROTOCOL_ERROR_HANDLER = System.err::println;
     
@@ -41,13 +41,13 @@ public class ProtocolFactory implements IFlowConsumer<IConnection>{
     }
 
     @Override
-    public void onNext(IConnection conn) {        
-        setup( get(), conn);        
+    public void onNext(IChannel ch) {        
+        setupChannel( get(), ch);        
     }
     
-    public void setup(IProtocol proto, IConnection conn){
-        conn.getDownstream().subscribeWith( proto );
-        proto.getFlow().subscribeWith( conn.getUpstream() );
+    public void setupChannel(IProtocol proto, IChannel ch){
+        ch.getDownstream().subscribeWith( proto.getDownstream() );
+        proto.getDownstream().subscribeWith( ch.getUpstream() );
     }
         
     @Override public void onSubscribe(Disposable d) {}

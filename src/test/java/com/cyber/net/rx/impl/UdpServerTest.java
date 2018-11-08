@@ -5,7 +5,7 @@
  */
 package com.cyber.net.rx.impl;
 
-import com.cyber.net.rx.UdpConnection;
+import com.cyber.net.rx.UdpChannel;
 import com.cyber.net.rx.protocol.EchoProtocol;
 import com.cyber.net.rx.protocol.ProtocolFactory;
 import io.reactivex.observers.TestObserver;
@@ -112,7 +112,7 @@ public class UdpServerTest {
             .doOnNext(data -> System.out.println("server.in: " + data))
             .subscribe( conn -> conn.getDownstream().subscribeWith( conn.getUpstream() ) );        
         
-        UdpConnection conn = UdpClient.connect("127.0.0.1", port);
+        UdpChannel conn = UdpClient.connect("127.0.0.1", port);
         conn.getDownstream().subscribe(data -> System.out.println("client.in: " + data));
         conn.getDownstream().map(b -> new String(b)).subscribeWith(testObs);
         

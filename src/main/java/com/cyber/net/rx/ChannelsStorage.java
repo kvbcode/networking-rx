@@ -15,28 +15,28 @@ import java.net.ConnectException;
  *
  * @author CyberManic
  */
-public class ConnectionStorage<T>{
+public class ChannelsStorage<T>{
 
-    private final ConcurrentHashMap<T, IConnection> map;
+    private final ConcurrentHashMap<T, IChannel> map;
     
-    public ConnectionStorage(){
+    public ChannelsStorage(){
         map = new ConcurrentHashMap<>();
     }
 
-    public IConnection get(T key){
+    public IChannel get(T key){
         return map.get(key);
     }
 
-    public void put(T key, IConnection connection){
+    public void put(T key, IChannel connection){
         map.put(key, connection);
     }
     
     public void remove(T key){
-        IConnection conn = map.remove(key);
+        IChannel conn = map.remove(key);
         conn.close();
     }
 
-    public Observable<Entry<T, IConnection>> iterate(){
+    public Observable<Entry<T, IChannel>> iterate(){
         return Observable.fromIterable(map.entrySet());
     }
     

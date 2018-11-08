@@ -15,12 +15,12 @@ import java.util.Optional;
  *
  * @author CyberManic
  */
-public class UdpConnectionDispatcher implements IFlowConsumer<RawPacket>{
+public class UdpChannelDispatcher implements IFlowConsumer<RawPacket>{
 
-    private final ConnectionStorage<SocketAddress> storage;
-    private final UdpConnectionFactory factory;
+    private final ChannelsStorage<SocketAddress> storage;
+    private final UdpChannelFactory factory;
     
-    public UdpConnectionDispatcher(ConnectionStorage<SocketAddress> connectionStorage, UdpConnectionFactory connectionFactory){
+    public UdpChannelDispatcher(ChannelsStorage<SocketAddress> connectionStorage, UdpChannelFactory connectionFactory){
         this.storage = connectionStorage;
         this.factory = connectionFactory;
     }
@@ -29,10 +29,10 @@ public class UdpConnectionDispatcher implements IFlowConsumer<RawPacket>{
     public void onNext(RawPacket p) {
         final SocketAddress remoteAddress = p.getRemoteSocketAddress();
         
-        IConnection conn = Optional
+        IChannel conn = Optional
             .ofNullable(storage.get(remoteAddress))
             .orElseGet(() -> {
-                    IConnection c = factory.get(remoteAddress);
+                    IChannel c = factory.get(remoteAddress);
                     storage.put(remoteAddress, c);
                     return c;
             });        

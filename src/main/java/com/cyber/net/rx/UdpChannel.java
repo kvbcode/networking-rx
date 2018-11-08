@@ -12,13 +12,13 @@ import java.net.SocketAddress;
  *
  * @author CyberManic
  */
-public class UdpConnection extends AFlowDuplex<byte[]> implements IConnection{
+public class UdpChannel extends AFlowDuplex<byte[]> implements IChannel{
 
     private final UdpSocketWriter writer;    
     private final SocketAddress remoteSocketAddress;
     private volatile long lastActivityTime;
         
-    public UdpConnection(UdpSocketWriter writer, SocketAddress remoteSocketAddress){
+    public UdpChannel(UdpSocketWriter writer, SocketAddress remoteSocketAddress){
         this.writer = writer;
         this.remoteSocketAddress = remoteSocketAddress; 
         

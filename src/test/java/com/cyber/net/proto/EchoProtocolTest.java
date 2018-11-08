@@ -6,6 +6,7 @@
 package com.cyber.net.proto;
 
 import com.cyber.net.rx.protocol.EchoProtocol;
+import io.reactivex.Observable;
 import io.reactivex.observers.TestObserver;
 import org.junit.After;
 import org.junit.Before;
@@ -17,7 +18,7 @@ import org.junit.Test;
  */
 public class EchoProtocolTest {
     
-    EchoProtocol proto;
+    EchoProtocol<String> proto;
     String TEST_STRING = "THIS_IS_TEST_STRING";
     TestObserver<String> testObs = new TestObserver<>();
     
@@ -26,7 +27,7 @@ public class EchoProtocolTest {
     
     @Before
     public void setUp() {
-        proto = new EchoProtocol();
+        proto = new EchoProtocol<>();
     }
     
     @After
@@ -36,12 +37,12 @@ public class EchoProtocolTest {
     @Test
     public void testInputOutput(){
         System.out.println("testInputOutput()");
-        
-        proto.getFlow()
-            .map(b -> new String(b))
+                
+        proto.getUpstream()
             .subscribeWith(testObs);
-        
-        proto.onNext(TEST_STRING.getBytes());
+
+        Observable.just(TEST_STRING)
+            .subscribeWith( proto.getDownstream() );
         
         System.out.println("return: " + testObs.values());
         testObs.awaitCount(1).assertValue(TEST_STRING);

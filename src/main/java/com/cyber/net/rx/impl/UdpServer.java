@@ -6,10 +6,10 @@
 
 package com.cyber.net.rx.impl;
 
-import com.cyber.net.rx.ConnectionStorage;
-import com.cyber.net.rx.UdpConnection;
-import com.cyber.net.rx.UdpConnectionDispatcher;
-import com.cyber.net.rx.UdpConnectionFactory;
+import com.cyber.net.rx.ChannelsStorage;
+import com.cyber.net.rx.UdpChannel;
+import com.cyber.net.rx.UdpChannelDispatcher;
+import com.cyber.net.rx.UdpChannelFactory;
 import com.cyber.util.Timeout;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
@@ -26,11 +26,11 @@ public class UdpServer{
     private final static long DEFAULT_TIMEOUT_VALUE = 5000;
 
     private final DatagramSocket localSocket;
-    private final ConnectionStorage<SocketAddress> connectionStorage;
+    private final ChannelsStorage<SocketAddress> connectionStorage;
 
     private final UdpTransport udp;
-    private final UdpConnectionDispatcher connectionDispatcher;
-    private final UdpConnectionFactory connectionFactory;
+    private final UdpChannelDispatcher connectionDispatcher;
+    private final UdpChannelFactory connectionFactory;
     private Timeout connectionTimeout;
     
     private Disposable timeoutSub;
@@ -38,12 +38,12 @@ public class UdpServer{
     
     public UdpServer(DatagramSocket localSocket) throws SocketException{
         this.localSocket = localSocket;
-        connectionStorage = new ConnectionStorage<>();        
+        connectionStorage = new ChannelsStorage<>();        
         connectionTimeout = new Timeout(DEFAULT_TIMEOUT_VALUE);
 
         udp = UdpTransport.listen(localSocket);
-        connectionFactory = new UdpConnectionFactory( udp.getWriter() );        
-        connectionDispatcher = new UdpConnectionDispatcher( connectionStorage, connectionFactory );        
+        connectionFactory = new UdpChannelFactory( udp.getWriter() );        
+        connectionDispatcher = new UdpChannelDispatcher( connectionStorage, connectionFactory );        
         
         udp.getFlow().subscribeWith( connectionDispatcher );
 
@@ -54,7 +54,7 @@ public class UdpServer{
         this(new DatagramSocket(port));
     }
 
-    public ConnectionStorage<SocketAddress> getConnectionStorage(){
+    public ChannelsStorage<SocketAddress> getConnectionStorage(){
         return connectionStorage;
     }
     
@@ -80,9 +80,9 @@ public class UdpServer{
     /**
      * Возвращает поток новых соединений
      * @return Observable
-     * @see UdpConnectionFactory#getFlow
+     * @see UdpChannelFactory#getFlow
      */
-    public Observable<UdpConnection> observeConnection() {
+    public Observable<UdpChannel> observeConnection() {
         return connectionFactory.getFlow();
     }
     
