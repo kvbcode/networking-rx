@@ -21,7 +21,7 @@ repositories {
 }
 
 group 'com.cyber.net'
-version='1.01-SNAPSHOT'
+version='0.1.2-SNAPSHOT'
 
 publishing {
     publications {

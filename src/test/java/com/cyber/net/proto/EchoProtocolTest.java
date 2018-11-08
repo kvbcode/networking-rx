@@ -5,7 +5,7 @@
  */
 package com.cyber.net.proto;
 
-import com.cyber.net.dto.RawPacket;
+import com.cyber.net.rx.protocol.EchoProtocol;
 import io.reactivex.observers.TestObserver;
 import org.junit.After;
 import org.junit.Before;
@@ -26,7 +26,7 @@ public class EchoProtocolTest {
     
     @Before
     public void setUp() {
-        proto = new EchoProtocol<RawPacket>();
+        proto = new EchoProtocol();
     }
     
     @After
@@ -37,9 +37,11 @@ public class EchoProtocolTest {
     public void testInputOutput(){
         System.out.println("testInputOutput()");
         
-        proto.outputSlot().subscribeWith(testObs);
+        proto.getFlow()
+            .map(b -> new String(b))
+            .subscribeWith(testObs);
         
-        proto.inputSlot().onNext(TEST_STRING);
+        proto.onNext(TEST_STRING.getBytes());
         
         System.out.println("return: " + testObs.values());
         testObs.awaitCount(1).assertValue(TEST_STRING);
