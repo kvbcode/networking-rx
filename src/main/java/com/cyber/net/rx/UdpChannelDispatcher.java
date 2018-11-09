@@ -17,12 +17,12 @@ import java.util.Optional;
  */
 public class UdpChannelDispatcher implements IFlowConsumer<RawPacket>{
 
-    private final ChannelsStorage<SocketAddress> storage;
+    private final ChannelStorage<SocketAddress> storage;
     private final UdpChannelFactory factory;
     
-    public UdpChannelDispatcher(ChannelsStorage<SocketAddress> connectionStorage, UdpChannelFactory connectionFactory){
-        this.storage = connectionStorage;
-        this.factory = connectionFactory;
+    public UdpChannelDispatcher(ChannelStorage<SocketAddress> channelStorage, UdpChannelFactory channelFactory){
+        this.storage = channelStorage;
+        this.factory = channelFactory;
     }
 
     @Override

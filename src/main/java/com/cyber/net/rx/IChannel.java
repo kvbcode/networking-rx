@@ -9,9 +9,9 @@ package com.cyber.net.rx;
  *
  * @author CyberManic
  */
-public interface IChannel extends IFlowDuplex<byte[]>{
+public interface IChannel extends IDuplexFlow<byte[]>{
     
-    public long getLastActivityTime();
+    public long getLastActivityNanos();
     
     public void close();
     

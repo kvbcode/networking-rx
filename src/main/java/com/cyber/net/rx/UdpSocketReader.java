@@ -21,18 +21,28 @@ import java.net.SocketException;
 public class UdpSocketReader implements IFlowSource<RawPacket>, Runnable{
 
     private final PublishSubject<RawPacket> flow = PublishSubject.create();
+    private final Observable<RawPacket> sharedFlow;
+    
     private final DatagramSocket localSocket;
     private final byte[] netbuf = new byte[8200];
     private final DatagramPacket dg = new DatagramPacket(netbuf, netbuf.length);
     private volatile boolean shutdown = false;
+
+    private final Thread readerThread;
     
     public UdpSocketReader(DatagramSocket localSocket){
-        this.localSocket = localSocket;        
+        this.localSocket = localSocket;
+
+        readerThread = new Thread(this, "UdpTransportSocketReader");                
+        
+        sharedFlow = flow
+            .doOnSubscribe(d -> readerThread.start())
+            .share();        
     }
     
     @Override
     public Observable<RawPacket> getFlow(){
-        return flow;
+        return sharedFlow;
     }
            
     private RawPacket receiveRawPacket() throws IOException{

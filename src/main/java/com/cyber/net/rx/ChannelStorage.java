@@ -9,17 +9,16 @@ package com.cyber.net.rx;
 import io.reactivex.Observable;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.net.ConnectException;
 
 /**
  *
  * @author CyberManic
  */
-public class ChannelsStorage<T>{
+public class ChannelStorage<T>{
 
     private final ConcurrentHashMap<T, IChannel> map;
     
-    public ChannelsStorage(){
+    public ChannelStorage(){
         map = new ConcurrentHashMap<>();
     }
 
@@ -27,13 +26,13 @@ public class ChannelsStorage<T>{
         return map.get(key);
     }
 
-    public void put(T key, IChannel connection){
-        map.put(key, connection);
+    public void put(T key, IChannel ch){
+        map.put(key, ch);
     }
     
     public void remove(T key){
-        IChannel conn = map.remove(key);
-        conn.close();
+        IChannel ch = map.remove(key);
+        ch.close();
     }
 
     public Observable<Entry<T, IChannel>> iterate(){

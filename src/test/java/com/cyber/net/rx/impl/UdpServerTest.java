@@ -70,7 +70,7 @@ public class UdpServerTest {
         
         UdpServer server = new UdpServer(port);
         server
-            .setTimeout(100)
+            .setTimeout(50)
             .observeConnection()
                 .doOnNext(conn -> conn.getDownstream()
                     .doOnComplete( completedConnectionCounter::incrementAndGet )
@@ -85,11 +85,11 @@ public class UdpServerTest {
         client.send(TEST_STRING.getBytes());
         client.send(TEST_STRING.getBytes());
                 
-        TimeUnit.MILLISECONDS.sleep(250);
+        TimeUnit.MILLISECONDS.sleep(150);
 
         client.send(TEST_STRING.getBytes());
 
-        TimeUnit.MILLISECONDS.sleep(250);
+        TimeUnit.MILLISECONDS.sleep(150);
 
         server.close();
         

@@ -11,7 +11,7 @@ import io.reactivex.subjects.Subject;
  *
  * @author CyberManic
  */
-public interface IFlowDuplex<T> {
+public interface IDuplexFlow<T> {
     
     Subject<T> getDownstream();
     

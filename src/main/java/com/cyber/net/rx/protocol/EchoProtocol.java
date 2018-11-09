@@ -6,13 +6,13 @@
 
 package com.cyber.net.rx.protocol;
 
-import com.cyber.net.rx.AFlowDuplex;
+import com.cyber.net.rx.ADuplexFlow;
 
 /**
  *
  * @author CyberManic
  */
-public class EchoProtocol<T> extends AFlowDuplex<T> implements IProtocol<T>{
+public class EchoProtocol<T> extends ADuplexFlow<T> implements IProtocol<T>{
 
     public EchoProtocol(){
         System.out.println(this + " created");        

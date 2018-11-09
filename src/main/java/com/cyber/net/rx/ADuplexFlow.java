@@ -13,10 +13,10 @@ import io.reactivex.subjects.Subject;
  *
  * @author CyberManic
  */
-public class AFlowDuplex<T> implements IFlowDuplex<T>{
+public class ADuplexFlow<T> implements IDuplexFlow<T>{
 
-    protected final Subject<T> downstream = PublishSubject.create();
-    protected final Subject<T> upstream = PublishSubject.create();
+    protected Subject<T> downstream = PublishSubject.create();
+    protected Subject<T> upstream = PublishSubject.create();
 
     @Override
     public Subject<T> getDownstream() {

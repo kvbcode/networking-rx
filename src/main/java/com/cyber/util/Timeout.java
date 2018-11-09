@@ -18,16 +18,42 @@ public class Timeout implements Predicate<Long>{
 
     private final long timeoutNanos;
     
-    public Timeout(long milliseconds){
-        if (milliseconds < 0) throw new IllegalArgumentException("timeout value must be positive");
-        timeoutNanos = TimeUnit.MILLISECONDS.toNanos(milliseconds);
+    private Timeout(long timeoutNanos){
+        if (timeoutNanos < 0) throw new IllegalArgumentException("timeout value must be positive");
+        this.timeoutNanos = timeoutNanos;
+    }
+
+    public static Timeout fromNanos(long timeoutNanos){
+        return new Timeout(timeoutNanos);
+    }
+
+    public static Timeout fromMillis(long timeoutMillis){
+        return new Timeout(TimeUnit.MILLISECONDS.toNanos(timeoutMillis));
+    }
+
+    public static Timeout fromSeconds(long timeoutSeconds){
+        return new Timeout(TimeUnit.SECONDS.toNanos(timeoutSeconds));
+    }
+    
+    /**
+     * @return timeout value in milliseconds
+     */
+    public long getTimeoutValueNanos(){
+        return timeoutNanos;
     }
 
     /**
      * @return timeout value in milliseconds
      */
-    public long getTimeoutValue(){
+    public long getTimeoutValueMillis(){
         return TimeUnit.NANOSECONDS.toMillis(timeoutNanos);
+    }
+
+    /**
+     * @return timeout value in milliseconds
+     */
+    public long getTimeoutValueSeconds(){
+        return TimeUnit.NANOSECONDS.toSeconds(timeoutNanos);
     }
     
     /**

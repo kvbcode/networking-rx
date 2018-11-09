@@ -7,16 +7,13 @@ package com.cyber.net;
 
 import com.cyber.net.rx.UdpSocketWriter;
 import com.cyber.net.rx.UdpSocketReader;
-import com.cyber.net.dto.RawPacket;
 import io.reactivex.observers.TestObserver;
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -48,19 +45,20 @@ public class UdpSocketReaderTest {
     }
 
     @Test
-    public void testPacket() throws IOException{
+    public void testPacket() throws Exception{
         System.out.println("testPacket()");
         
         reader.getFlow()
             .map(p -> new String(p.getData()))
             .doOnNext(s -> System.out.println( "received: " + s ))
             .subscribeWith(testObs);
-                
-        UdpSocketWriter client = new UdpSocketWriter(new DatagramSocket());
-        client.onNext(new RawPacket(new InetSocketAddress("127.0.0.1", PORT), TEST_STRING.getBytes()));
+        
+        UdpSocketWriter writer = new UdpSocketWriter(new DatagramSocket());
+        writer.send(TEST_STRING.getBytes(), new InetSocketAddress("127.0.0.1", PORT));
+        writer.send(TEST_STRING.getBytes(), new InetSocketAddress("127.0.0.1", PORT));
         
         System.out.println( "test.in: " + testObs.awaitCount(1).values() );
-        testObs.assertValue(TEST_STRING);
+        testObs.assertValueAt(0, TEST_STRING);
     }
     
 }

@@ -18,22 +18,14 @@ import com.cyber.net.rx.IChannel;
  */
 public class ProtocolFactory implements IFlowConsumer<IChannel>{
 
-    private static final Consumer<Throwable> DEFAULT_PROTOCOL_ERROR_HANDLER = System.err::println;
-    
     private final Supplier<IProtocol> protocolSupplier;
-    private final Consumer<Throwable> protocolErrorHandler;    
     
-    private ProtocolFactory( Supplier<IProtocol> protocolSupplier, Consumer<Throwable> protocolErrorHandler ){
+    private ProtocolFactory( Supplier<IProtocol> protocolSupplier ){
         this.protocolSupplier = protocolSupplier;
-        this.protocolErrorHandler = protocolErrorHandler;
-    }
-
-    public static ProtocolFactory from( Supplier<IProtocol> protocolSupplier, Consumer<Throwable> protocolErrorHandler ){
-        return new ProtocolFactory(protocolSupplier, protocolErrorHandler);
     }
     
     public static ProtocolFactory from( Supplier<IProtocol> protocolSupplier ){
-        return new ProtocolFactory( protocolSupplier, DEFAULT_PROTOCOL_ERROR_HANDLER );
+        return new ProtocolFactory( protocolSupplier );
     }
     
     public IProtocol get(){
@@ -42,10 +34,10 @@ public class ProtocolFactory implements IFlowConsumer<IChannel>{
 
     @Override
     public void onNext(IChannel ch) {        
-        setupChannel( get(), ch);        
+        setupChannel( ch, get());        
     }
     
-    public void setupChannel(IProtocol proto, IChannel ch){
+    public void setupChannel(IChannel ch, IProtocol proto){
         ch.getDownstream().subscribeWith( proto.getDownstream() );
         proto.getDownstream().subscribeWith( ch.getUpstream() );
     }

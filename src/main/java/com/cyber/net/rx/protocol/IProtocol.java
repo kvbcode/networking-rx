@@ -5,12 +5,12 @@
  */
 package com.cyber.net.rx.protocol;
 
-import com.cyber.net.rx.IFlowDuplex;
+import com.cyber.net.rx.IDuplexFlow;
 
 /**
  *
  * @author CyberManic
  */
-public interface IProtocol<T> extends IFlowDuplex<T>{
+public interface IProtocol<T> extends IDuplexFlow<T>{
     
 }

@@ -6,7 +6,7 @@
 
 package com.cyber.net.rx.impl;
 
-import com.cyber.net.rx.ChannelsStorage;
+import com.cyber.net.rx.ChannelStorage;
 import com.cyber.net.rx.UdpChannel;
 import com.cyber.net.rx.UdpChannelDispatcher;
 import com.cyber.net.rx.UdpChannelFactory;
@@ -23,56 +23,55 @@ import java.util.concurrent.TimeUnit;
  * @author CyberManic
  */
 public class UdpServer{
-    private final static long DEFAULT_TIMEOUT_VALUE = 5000;
+    private final static long DEFAULT_CHANNEL_TIMEOUT_MILLIS = 5000;
 
     private final DatagramSocket localSocket;
-    private final ChannelsStorage<SocketAddress> connectionStorage;
+    private final ChannelStorage<SocketAddress> channelStorage;
 
     private final UdpTransport udp;
-    private final UdpChannelDispatcher connectionDispatcher;
-    private final UdpChannelFactory connectionFactory;
-    private Timeout connectionTimeout;
+    private final UdpChannelDispatcher channelDispatcher;
+    private final UdpChannelFactory channelFactory;
+    private Timeout channelTimeoutUtil;
     
     private Disposable timeoutSub;
     
     
     public UdpServer(DatagramSocket localSocket) throws SocketException{
         this.localSocket = localSocket;
-        connectionStorage = new ChannelsStorage<>();        
-        connectionTimeout = new Timeout(DEFAULT_TIMEOUT_VALUE);
+        channelStorage = new ChannelStorage<>();        
 
         udp = UdpTransport.listen(localSocket);
-        connectionFactory = new UdpChannelFactory( udp.getWriter() );        
-        connectionDispatcher = new UdpChannelDispatcher( connectionStorage, connectionFactory );        
+        channelFactory = new UdpChannelFactory( udp.getWriter() );        
+        channelDispatcher = new UdpChannelDispatcher( channelStorage, channelFactory );        
         
-        udp.getFlow().subscribeWith( connectionDispatcher );
+        udp.getFlow().subscribeWith( channelDispatcher );
 
-        setTimeout(DEFAULT_TIMEOUT_VALUE);
+        setTimeout(DEFAULT_CHANNEL_TIMEOUT_MILLIS);
     }
 
     public UdpServer(int port) throws SocketException{
         this(new DatagramSocket(port));
     }
 
-    public ChannelsStorage<SocketAddress> getConnectionStorage(){
-        return connectionStorage;
+    public ChannelStorage<SocketAddress> getChannelsStorage(){
+        return channelStorage;
     }
     
     public UdpServer setTimeout(long milliseconds){
-        connectionTimeout = new Timeout(milliseconds);        
+        channelTimeoutUtil = Timeout.fromMillis(milliseconds);        
 
         if (timeoutSub!=null && !timeoutSub.isDisposed()) timeoutSub.dispose();
         
-        timeoutSub = Observable.interval( connectionTimeout.getTimeoutValue(), TimeUnit.MILLISECONDS )
-            .flatMap(i -> connectionStorage.iterate())
-            .filter(e -> connectionTimeout.isTimeout( e.getValue().getLastActivityTime() ) )
-            .subscribe( e -> connectionStorage.remove( e.getKey() ) );
+        timeoutSub = Observable.interval( channelTimeoutUtil.getTimeoutValueMillis(), TimeUnit.MILLISECONDS )
+            .flatMap(i -> channelStorage.iterate())
+            .filter(e -> channelTimeoutUtil.isTimeout( e.getValue().getLastActivityNanos() ) )
+            .subscribe( e -> channelStorage.remove( e.getKey() ) );
         
         return this;
     }
         
     public void close(){
-        connectionStorage.close();        
+        channelStorage.close();        
         udp.close();
         localSocket.close();
     }
@@ -83,7 +82,7 @@ public class UdpServer{
      * @see UdpChannelFactory#getFlow
      */
     public Observable<UdpChannel> observeConnection() {
-        return connectionFactory.getFlow();
+        return channelFactory.getFlow();
     }
     
 }

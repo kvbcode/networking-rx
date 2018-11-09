@@ -12,27 +12,27 @@ import java.net.SocketAddress;
  *
  * @author CyberManic
  */
-public class UdpChannel extends AFlowDuplex<byte[]> implements IChannel{
+public class UdpChannel extends ADuplexFlow<byte[]> implements IChannel{
 
     private final UdpSocketWriter writer;    
     private final SocketAddress remoteSocketAddress;
-    private volatile long lastActivityTime;
+    private volatile long lastActivityNanos;
         
     public UdpChannel(UdpSocketWriter writer, SocketAddress remoteSocketAddress){
         this.writer = writer;
         this.remoteSocketAddress = remoteSocketAddress; 
         
-        getDownstream().subscribe((data) -> this.updateActivityTime());
+        getDownstream().subscribe((data) -> this.updateActivityNanos());
         getUpstream().subscribe(this::send);
     }
 
-    protected void updateActivityTime(){
-        this.lastActivityTime = System.nanoTime();
+    protected void updateActivityNanos(){
+        this.lastActivityNanos = System.nanoTime();
     }
 
     @Override
-    public long getLastActivityTime() {
-        return lastActivityTime;
+    public long getLastActivityNanos() {
+        return lastActivityNanos;
     }        
     
     @Override
