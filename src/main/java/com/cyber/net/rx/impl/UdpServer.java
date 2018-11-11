@@ -53,7 +53,7 @@ public class UdpServer{
         this(new DatagramSocket(port));
     }
 
-    public ChannelStorage<SocketAddress> getChannelsStorage(){
+    public ChannelStorage<SocketAddress> getChannels(){
         return channelStorage;
     }
     
