@@ -5,16 +5,10 @@
  */
 package com.cyber.net.rx;
 
-import io.reactivex.subjects.Subject;
-
 /**
  *
  * @author CyberManic
  */
-public interface IDuplexFlow<T> {
-    
-    Subject<T> getDownstream();
-    
-    Subject<T> getUpstream();
+public interface IDuplexFlowSource<T> extends IFlowSource<T>, IFlowConsumer<T>{        
     
 }

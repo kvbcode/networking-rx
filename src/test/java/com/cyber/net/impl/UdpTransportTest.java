@@ -68,9 +68,8 @@ public class UdpTransportTest {
         System.out.println("testEcho()");
 
         EchoProtocol<RawPacket> proto = new EchoProtocol<>();
-        server.getFlow().subscribeWith(proto.getDownstream());
-        proto.getUpstream().subscribeWith(server);
-        
+        proto.bind(server.getFlow())
+            .getFlow().subscribeWith(server);                
         
         System.out.println("server: " + server);
         System.out.println("client: " + client);
@@ -92,8 +91,8 @@ public class UdpTransportTest {
         System.out.println("testReConnect()");
         
         EchoProtocol proto = new EchoProtocol();
-        server.getFlow().subscribeWith(proto.getDownstream());
-        proto.getUpstream().subscribeWith(server);
+        proto.bind(server.getFlow())
+            .getFlow().subscribeWith(server);                
         
         System.out.println("server: " + server);
         System.out.println("client: " + client);

@@ -29,15 +29,15 @@ public class UdpChannelDispatcher implements IFlowConsumer<RawPacket>{
     public void onNext(RawPacket p) {
         final SocketAddress remoteAddress = p.getRemoteSocketAddress();
         
-        IChannel conn = Optional
+        IChannel ch = Optional
             .ofNullable(storage.get(remoteAddress))
             .orElseGet(() -> {
                     IChannel c = factory.get(remoteAddress);
                     storage.put(remoteAddress, c);
                     return c;
             });        
-                
-        conn.getDownstream().onNext(p.getData());
+        
+        ch.accept(p.getData());
     }
 
     @Override public void onSubscribe(Disposable d) {}

@@ -6,24 +6,29 @@
 
 package com.cyber.net.rx;
 
+import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
 import java.net.SocketAddress;
 
 /**
  *
  * @author CyberManic
  */
-public class UdpChannel extends ADuplexFlow<byte[]> implements IChannel{
+public class UdpChannel implements IChannel{
 
     private final UdpSocketWriter writer;    
     private final SocketAddress remoteSocketAddress;
     private volatile long lastActivityNanos;
         
+    protected final PublishSubject<byte[]> downstream = PublishSubject.create();
+    protected Observable<byte[]> flow = downstream;
+    
     public UdpChannel(UdpSocketWriter writer, SocketAddress remoteSocketAddress){
         this.writer = writer;
         this.remoteSocketAddress = remoteSocketAddress; 
         
-        getDownstream().subscribe((data) -> this.updateActivityNanos());
-        getUpstream().subscribe(this::send);
+        downstream.subscribe((data) -> this.updateActivityNanos());
     }
 
     protected void updateActivityNanos(){
@@ -37,8 +42,7 @@ public class UdpChannel extends ADuplexFlow<byte[]> implements IChannel{
     
     @Override
     public void close(){
-        getDownstream().onComplete();
-        getUpstream().onComplete();
+        downstream.onComplete();
     }
     
     protected void send(byte[] data) {
@@ -49,5 +53,17 @@ public class UdpChannel extends ADuplexFlow<byte[]> implements IChannel{
     public String toString(){
         return this.getClass().getSimpleName() + "[" + remoteSocketAddress + "]";
     }
+
+    @Override public void accept(byte[] dataIn){ downstream.onNext(dataIn); }
+
+    @Override public void onNext(byte[] dataOut) { send(dataOut); }
+
+    @Override public Observable<byte[]> getFlow() { return flow; }
+
+    @Override public void onSubscribe(Disposable d) { }
+
+    @Override public void onError(Throwable e) { }
+
+    @Override public void onComplete() { }
 
 }

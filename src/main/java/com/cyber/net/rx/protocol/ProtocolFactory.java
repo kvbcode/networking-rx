@@ -8,7 +8,6 @@ package com.cyber.net.rx.protocol;
 
 import com.cyber.net.rx.IFlowConsumer;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
 import java.util.function.Supplier;
 import com.cyber.net.rx.IChannel;
 
@@ -16,7 +15,7 @@ import com.cyber.net.rx.IChannel;
  *
  * @author CyberManic
  */
-public class ProtocolFactory implements IFlowConsumer<IChannel>{
+public class ProtocolFactory implements IFlowConsumer<IChannel>, Supplier<IProtocol>{
 
     private final Supplier<IProtocol> protocolSupplier;
     
@@ -28,20 +27,17 @@ public class ProtocolFactory implements IFlowConsumer<IChannel>{
         return new ProtocolFactory( protocolSupplier );
     }
     
+    @Override
     public IProtocol get(){
         return protocolSupplier.get();
     }
 
     @Override
     public void onNext(IChannel ch) {        
-        setupChannel( ch, get());        
+        get().bind( ch.getFlow() )
+            .getFlow().subscribeWith( ch );
     }
-    
-    public void setupChannel(IChannel ch, IProtocol proto){
-        ch.getDownstream().subscribeWith( proto.getDownstream() );
-        proto.getDownstream().subscribeWith( ch.getUpstream() );
-    }
-        
+            
     @Override public void onSubscribe(Disposable d) {}
 
     @Override public void onError(Throwable e) {}

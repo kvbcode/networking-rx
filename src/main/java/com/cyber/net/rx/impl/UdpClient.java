@@ -23,13 +23,13 @@ public class UdpClient {
 
     public static UdpChannel connect(SocketAddress remoteSocketAddress) throws SocketException{
         UdpTransport udp = UdpTransport.connect( remoteSocketAddress );        
-        UdpChannel conn = new UdpChannel( udp.getWriter(), remoteSocketAddress );
+        UdpChannel ch = new UdpChannel( udp.getWriter(), remoteSocketAddress );
 
         udp.getFlow()
             .map(p -> p.getData())
-            .subscribeWith(conn.getDownstream());
+            .subscribe(dataIn -> ch.accept(dataIn));
         
-        return conn;
+        return ch;
     }
 
     public static UdpChannel connect(String host, int port) throws SocketException{

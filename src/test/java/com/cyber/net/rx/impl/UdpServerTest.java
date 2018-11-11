@@ -36,18 +36,22 @@ public class UdpServerTest {
     }
 
     @Test
-    public void testSimpleEcho() throws Exception{
+    public void testServerEchoProtocol() throws Exception{
         System.out.println("\ntestSimpleEcho()");
         
         TestObserver<String> testObs = new TestObserver<>();
         
         UdpServer server = new UdpServer(port);
-        server.observeConnection().subscribeWith( ProtocolFactory.from( EchoProtocol::new ) );        
-
+        server
+            .observeConnection()
+            .subscribeWith( ProtocolFactory.from( EchoProtocol::new ) );        
         
         UdpTransport client = UdpTransport.connect("127.0.0.1", port);
-        client.getFlow().map(p -> new String(p.getData())).subscribe(System.out::println);
-        client.getFlow().map(p -> new String(p.getData())).subscribeWith(testObs);
+        client
+            .getFlow()
+            .map(p -> new String(p.getData()))
+            .doOnNext(System.out::println)
+            .subscribeWith(testObs);
         
         client.send(TEST_STRING.getBytes());
         client.send(TEST_STRING.getBytes());
@@ -59,6 +63,8 @@ public class UdpServerTest {
         
         testObs.assertValueCount(3);
         testObs.assertValueAt(2, TEST_STRING);
+
+        client.close();
     }
     
     @Test
@@ -72,15 +78,18 @@ public class UdpServerTest {
         server
             .setTimeout(50)
             .observeConnection()
-                .doOnNext(conn -> conn.getDownstream()
+                .doOnNext(ch -> ch.getFlow()
                     .doOnComplete( completedConnectionCounter::incrementAndGet )
                     .subscribe()
                 )
                 .subscribeWith( ProtocolFactory.from( EchoProtocol::new ) );
         
         UdpTransport client = UdpTransport.connect("127.0.0.1", port);
-        client.getFlow().map(p -> new String(p.getData())).subscribe(System.out::println);
-        client.getFlow().map(p -> new String(p.getData())).subscribeWith(testObs);
+        client
+            .getFlow()
+            .map(p -> new String(p.getData()))
+            .doOnNext(System.out::println)
+            .subscribeWith(testObs);
         
         client.send(TEST_STRING.getBytes());
         client.send(TEST_STRING.getBytes());
@@ -110,15 +119,15 @@ public class UdpServerTest {
         UdpServer server = new UdpServer(port);
         server.observeConnection()
             .doOnNext(data -> System.out.println("server.in: " + data))
-            .subscribe( conn -> conn.getDownstream().subscribeWith( conn.getUpstream() ) );        
+            .subscribe( conn -> conn.getFlow().subscribeWith( conn ) );        
         
-        UdpChannel conn = UdpClient.connect("127.0.0.1", port);
-        conn.getDownstream().subscribe(data -> System.out.println("client.in: " + data));
-        conn.getDownstream().map(b -> new String(b)).subscribeWith(testObs);
+        UdpChannel ch = UdpClient.connect("127.0.0.1", port);
+        ch.getFlow().subscribe(data -> System.out.println("client.in: " + data));
+        ch.getFlow().map(b -> new String(b)).subscribeWith(testObs);
         
-        conn.getUpstream().onNext(TEST_STRING.getBytes());
-        conn.getUpstream().onNext(TEST_STRING.getBytes());
-        conn.getUpstream().onNext(TEST_STRING.getBytes());
+        ch.accept(TEST_STRING.getBytes());
+        ch.accept(TEST_STRING.getBytes());
+        ch.accept(TEST_STRING.getBytes());
         
         TimeUnit.MILLISECONDS.sleep(50);
         server.close();

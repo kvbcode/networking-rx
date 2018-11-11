@@ -37,12 +37,9 @@ public class EchoProtocolTest {
     @Test
     public void testInputOutput(){
         System.out.println("testInputOutput()");
-                
-        proto.getUpstream()
-            .subscribeWith(testObs);
-
-        Observable.just(TEST_STRING)
-            .subscribeWith( proto.getDownstream() );
+                       
+        proto.bind(Observable.just(TEST_STRING))
+            .getFlow().subscribeWith( testObs );
         
         System.out.println("return: " + testObs.values());
         testObs.awaitCount(1).assertValue(TEST_STRING);

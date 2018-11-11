@@ -5,16 +5,15 @@
  */
 package com.cyber.net.rx;
 
+import com.cyber.net.rx.IFlowSource;
+import io.reactivex.Observable;
+
 /**
  *
  * @author CyberManic
  */
-public interface IChannel extends IDuplexFlowSource<byte[]>{
+public interface IFlowProcessor<T> extends IFlowSource<T>{
     
-    public long getLastActivityNanos();
-    
-    public void accept(byte[] dataIn);
-    
-    public void close();
+    public IFlowProcessor<T> bind( Observable<T> flow );
     
 }
