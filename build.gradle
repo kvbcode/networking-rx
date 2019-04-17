@@ -21,18 +21,7 @@ repositories {
 }
 
 group 'com.cyber.net'
-version='0.2.4-SNAPSHOT'
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            
-            artifact sourceJar
-            artifact packageJavadoc            
-        }
-    }
-}
+version='0.3.0-SNAPSHOT'
 
 javadoc {
   source = sourceSets.main.allJava
@@ -56,6 +45,25 @@ task packageJavadoc(type: Jar) {
     from javadoc
     classifier = 'javadoc'
 }
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            
+            artifact sourceJar
+            artifact packageJavadoc            
+        }
+    }
+}
+
+test {
+    testLogging {
+        //outputs.upToDateWhen {false}
+        showStandardStreams = true
+    }
+}
+
 
 dependencies {
     compile 'io.reactivex.rxjava2:rxjava:2.2.2'

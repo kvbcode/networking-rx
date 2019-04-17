@@ -7,9 +7,11 @@
 package com.cyber.net.rx.impl;
 
 import com.cyber.net.rx.ChannelStorage;
+import com.cyber.net.rx.IChannelFactory;
 import com.cyber.net.rx.UdpChannel;
 import com.cyber.net.rx.UdpChannelDispatcher;
 import com.cyber.net.rx.UdpChannelFactory;
+import com.cyber.net.rx.UdpSocketWriter;
 import com.cyber.util.Timeout;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
@@ -23,38 +25,47 @@ import java.util.concurrent.TimeUnit;
  * @author CyberManic
  */
 public class UdpServer{
-    private final static long DEFAULT_CHANNEL_TIMEOUT_MILLIS = 5000;
+    protected final static long DEFAULT_CHANNEL_TIMEOUT_MILLIS = 5000;
 
-    private final DatagramSocket localSocket;
-    private final ChannelStorage<SocketAddress> channelStorage;
-
-    private final UdpTransport udp;
-    private final UdpChannelDispatcher channelDispatcher;
-    private final UdpChannelFactory channelFactory;
-    private Timeout channelTimeoutUtil;
+    protected final DatagramSocket localSocket;
+    protected final ChannelStorage<SocketAddress> channelStorage;
     
-    private Disposable timeoutSub;
+    protected final UdpTransport udp;
+    protected final UdpChannelDispatcher channelDispatcher;
+    protected IChannelFactory<? extends UdpChannel> channelFactory;
+    protected Timeout channelTimeoutUtil;
+    
+    protected Disposable timeoutSub;
     
     
     public UdpServer(DatagramSocket localSocket) throws SocketException{
         this.localSocket = localSocket;
         channelStorage = new ChannelStorage<>();        
-
         udp = UdpTransport.listen(localSocket);
-        channelFactory = new UdpChannelFactory( udp.getWriter() );        
-        channelDispatcher = new UdpChannelDispatcher( channelStorage, channelFactory );        
+        
+        channelFactory = new UdpChannelFactory( udp.getWriter() );                    
+        channelDispatcher = new UdpChannelDispatcher( channelStorage, channelFactory );                
         
         udp.getFlow().subscribeWith( channelDispatcher );
 
         setTimeout(DEFAULT_CHANNEL_TIMEOUT_MILLIS);
     }
-
+    
     public UdpServer(int port) throws SocketException{
         this(new DatagramSocket(port));
     }
 
+    public void setChannelFactory(IChannelFactory<? extends UdpChannel> channelFactory){
+        this.channelFactory = channelFactory;
+        channelDispatcher.setChannelFactory(channelFactory);
+    }
+    
     public ChannelStorage<SocketAddress> getChannels(){
         return channelStorage;
+    }
+    
+    public UdpSocketWriter getWriter(){
+        return udp.getWriter();
     }
     
     public UdpServer setTimeout(long milliseconds){
@@ -81,7 +92,7 @@ public class UdpServer{
      * @return Observable
      * @see UdpChannelFactory#getFlow
      */
-    public Observable<UdpChannel> observeConnection() {
+    public Observable<? extends UdpChannel> observeConnection() {
         return channelFactory.getFlow();
     }
     

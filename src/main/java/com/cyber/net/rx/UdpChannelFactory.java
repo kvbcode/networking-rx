@@ -14,15 +14,16 @@ import java.net.SocketAddress;
  *
  * @author CyberManic
  */
-public class UdpChannelFactory implements IFlowSource<UdpChannel>{
+public class UdpChannelFactory implements IChannelFactory<UdpChannel>{
 
-    private final PublishSubject flow = PublishSubject.create();
-    private final UdpSocketWriter writer;
+    protected final PublishSubject flow = PublishSubject.create();
+    protected final UdpSocketWriter writer;
     
     public UdpChannelFactory(UdpSocketWriter writer){
         this.writer = writer;
     }
-
+    
+    @Override
     public UdpChannel get(SocketAddress remoteAddress){
         UdpChannel conn = new UdpChannel(writer, remoteAddress);
         flow.onNext(conn);
