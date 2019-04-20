@@ -36,7 +36,7 @@ public class UdpChannel implements IChannel{
     private volatile long lastActivityNanos;
         
     protected final PublishSubject<byte[]> downstream = PublishSubject.create();
-    protected Observable<byte[]> flow = downstream;
+    protected Observable<byte[]> flow = downstream.share();
     protected final IOutputWriter outputWriter;
     
     public UdpChannel(IOutputWriter outputWriter){        

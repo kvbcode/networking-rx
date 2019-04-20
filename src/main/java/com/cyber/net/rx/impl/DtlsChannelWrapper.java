@@ -27,8 +27,6 @@ package com.cyber.net.rx.impl;
 import com.cyber.net.rx.DtlsChannel;
 import com.cyber.net.rx.IChannel;
 import com.cyber.net.rx.UdpChannel;
-import io.reactivex.Observable;
-import io.reactivex.disposables.Disposable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 
@@ -51,8 +49,8 @@ public class DtlsChannelWrapper extends DtlsChannel{
         
         dtls.setOutputWriter(channel::onNext);
 
-        flow = channel.getFlow()
-                .compose(DtlsChannel.getDtlsConnectionHandler(dtls, channelOutputBuffer));
+        channel.getFlow().subscribe(downstream);
+        
     }
         
     /**
@@ -79,55 +77,4 @@ public class DtlsChannelWrapper extends DtlsChannel{
         return new DtlsChannelWrapper(context, channel, true);
     }        
     
-            
-    @Override
-    public long getLastActivityNanos() {
-        return channel.getLastActivityNanos();
-    }
-
-    @Override
-    public void close(){
-        dtls.getSSLEngine().closeOutbound();
-        try{
-            dtls.sendServiceData();
-        }catch(SSLException e){
-            onError(e);
-        }
-        obsConnectionStatus.onComplete();
-    }
-    
-    @Override
-    public void accept(byte[] dataIn) {
-        channel.accept(dataIn);
-    }
-
-    @Override
-    public Observable<byte[]> getFlow() {
-        return flow;
-    }
-
-    @Override
-    public void onSubscribe(Disposable dspsbl) {
-        channel.onSubscribe(dspsbl);
-    }
-
-    @Override
-    public void onNext(byte[] dataOut) {
-        try{
-            channel.onNext(dtls.crypt(dataOut));
-        }catch(SSLException e){
-            onError(e);
-        }        
-    }
-
-    @Override
-    public void onError(Throwable thrwbl) {
-        channel.onError(thrwbl);
-    }
-
-    @Override
-    public void onComplete() {
-        channel.onComplete();        
-    }
-        
 }

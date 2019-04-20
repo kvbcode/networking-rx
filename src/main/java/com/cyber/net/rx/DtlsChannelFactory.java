@@ -45,7 +45,7 @@ public class DtlsChannelFactory extends UdpChannelFactory{
     public DtlsChannel get(SocketAddress remoteAddress){
         DtlsChannel conn = new DtlsChannel(context, writer.getWriterFor(remoteAddress));
         try{
-            conn.getDtlsWrapper().useServerMode();
+            conn.getDtlsAdapter().useServerMode();
             flow.onNext(conn);
         }catch(SSLException e){
             flow.onError(e);

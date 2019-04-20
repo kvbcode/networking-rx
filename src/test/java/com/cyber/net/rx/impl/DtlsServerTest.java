@@ -79,7 +79,7 @@ public class DtlsServerTest {
         
         server.observeConnection()
                 .subscribe(ch -> {
-                    //((DtlsChannel)ch).getDtlsWrapper().setDebug(true);
+                    //((DtlsChannel)ch).getDtlsAdapter().setDebug(true);
                     System.out.println("server.new connection: " + ch);
                     ch.getFlow()
                         .map(String::new)
@@ -91,32 +91,70 @@ public class DtlsServerTest {
                 });
         
         DtlsChannel client = DtlsClient.connect(context, "127.0.0.1", PORT);
-        //client.getDtlsWrapper().setDebug(true);
+        //client.getDtlsAdapter().setDebug(true);
            
         client.getFlow()
                 .map(String::new)
                 .doOnNext(s -> System.out.println("client.in: " + s))
                 .subscribe(clientTestObs);
         
-        client.onNext(new byte[0]);
-        Thread.sleep(200);
-        client.onNext(CLIENT_HELLO[0].getBytes());
-        client.onNext(CLIENT_HELLO[1].getBytes());
-        client.onNext(CLIENT_HELLO[2].getBytes());
+        client.observeStatus()
+                .subscribe(ch -> {
+                    ch.onNext(CLIENT_HELLO[0].getBytes());
+                    ch.onNext(CLIENT_HELLO[1].getBytes());
+                    ch.onNext(CLIENT_HELLO[2].getBytes());
+                });
         
-        Thread.sleep(100);
-
         serverTestObs
-                .assertValueCount(3)
+                .awaitCount(3)
                 .assertValuesOnly(CLIENT_HELLO[0], CLIENT_HELLO[1], CLIENT_HELLO[2]);
                 
         
         clientTestObs
-                .assertValueCount(3)
+                .awaitCount(3)
                 .assertValuesOnly(SERVER_HELLO, SERVER_HELLO, SERVER_HELLO);
                 
         server.close();
         client.close();
+    }
+    
+    //@Test
+    public void infiniteDtlsEchoServer() throws Exception{      
+        System.out.println("infiniteDtlsEchoServer()");
+        
+        /*
+        ВНИМАНИЕ!
+        Приведенный код не является тестом. Он создан для демонстрации возможности
+        подключения DTLS клиентов и обмена данными.
+        Запустим DTLS клиент OpenSSL:
+        
+        openssl s_client -dtls1_2 -connect 127.0.0.1:15555 -key test_key.pem -cert test_cert.pem
+        
+        после рукопожатия сервер ответит: 'welcome to server'
+        записанный в консоли клиента текст вернется в верхнем регистре        
+        */
+        
+        DtlsServer server = new DtlsServer(context, PORT);
+        server.setTimeout(10000);
+        server.observeConnection()
+                .subscribe(ch -> {
+                    System.out.println("new udp connection: " + ch);
+                    
+                    // при подключении отправим клиенту сообщение
+                    ch.getFlow()
+                            .take(1)
+                            .subscribe( data -> ch.onNext("welcome to server\n".getBytes()) );
+                    
+                    // полученные сообщения отобразим на экране и вернем в верхнем регистре
+                    ch.getFlow()
+                            .map(String::new)
+                            .subscribe(s -> {
+                                System.out.println("server.in: " + s.trim());
+                                ch.onNext(s.toUpperCase().getBytes());
+                            });
+                });
+                
+        Thread.sleep(Long.MAX_VALUE);
     }
     
 }

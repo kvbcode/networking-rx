@@ -229,6 +229,7 @@ public class DtlsAdapter{
 
     public SSLEngineResult sendServiceData() throws SSLException{
         SSLEngineResult result = wrap(ByteBuffer.allocate(0), getOutputBuffer().clear());
+        if (debug && outputBuffer.position()>0) System.out.println(mode + " send service data: " + outputBuffer.position());
         writeOutput(outputBuffer);
         return result;
     }    

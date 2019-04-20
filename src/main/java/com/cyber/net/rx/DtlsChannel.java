@@ -57,11 +57,16 @@ public class DtlsChannel extends UdpChannel{
         dtls.setOnConnectedListener( () -> obsConnectionStatus.onNext(this) );
         dtls.setOnClosedListener( () -> obsConnectionStatus.onComplete() );
         
-        flow = flow.compose(getDtlsConnectionHandler(dtls, channelOutputBuffer) );
+        flow = downstream
+                .doOnSubscribe(sub -> dtls.sendServiceData())
+                .compose(getDtlsConnectionHandler(dtls, channelOutputBuffer) )
+                .skipWhile(data -> dtls.isHandshaking())
+                .share();
+
     }
 
     public static ObservableTransformer<byte[], byte[]> getDtlsConnectionHandler(DtlsAdapter dtls, ByteBuffer channelOutputBuffer){
-        return obs -> obs
+        return obs -> obs                
             .flatMap(input -> {
                 if (dtls.isHandshaking()){
                     dtls.handleConnectionData(ByteBuffer.wrap(input), channelOutputBuffer.clear());
@@ -79,7 +84,7 @@ public class DtlsChannel extends UdpChannel{
             });
     }
     
-    public DtlsAdapter getDtlsWrapper(){
+    public DtlsAdapter getDtlsAdapter(){
         return dtls;
     }
     
@@ -111,11 +116,5 @@ public class DtlsChannel extends UdpChannel{
     public Observable<DtlsChannel> observeStatus(){
         return obsConnectionStatus;
     }
-
-    public Observable<DtlsChannel> openConnection() throws SSLException{
-        dtls.sendServiceData();
-        return observeStatus();
-    }
-
     
 }

@@ -24,8 +24,6 @@
 package com.cyber.net.rx.impl;
 
 import com.cyber.net.rx.DtlsChannel;
-import static com.cyber.net.rx.impl.DtlsServerTest.PORT;
-import static com.cyber.net.rx.impl.DtlsServerTest.context;
 import com.cyber.net.ssl.SSLContextFactory;
 import io.reactivex.observers.TestObserver;
 import java.security.NoSuchAlgorithmException;
@@ -77,12 +75,12 @@ public class DtlsChannelWrapperTest {
         
         server.observeConnection()
                 .subscribe(udpCh -> {
-                    DtlsChannel ch = DtlsChannelWrapper.asServer(context, udpCh);
+                    DtlsChannel ch = DtlsChannelWrapper.asServer(context, udpCh);                    
                     ch.observeStatus()
                             .doOnComplete(() -> System.out.println("SERVER CONNECTION CLOSED") )
                             .subscribe(conn -> System.out.println("SERVER CONNECTED, HANDSHAKE FINISHED") );
                     
-                    //ch.setDebug(true);
+                    //ch.getDtlsWrapper().setDebug(true);
                     ch.getFlow()
                             .doOnNext(data -> System.out.println("server.in: " + new String(data)))
                             .doOnComplete(() -> System.out.println("server.in: channel closed"))
@@ -93,13 +91,13 @@ public class DtlsChannelWrapperTest {
         TestObserver<String> clientTestObs = new TestObserver<>();
                 
         DtlsChannel client = DtlsChannelWrapper.asClient(context, UdpClient.connect("127.0.0.1", PORT));
-        //client.setDebug(true);
+        //client.getDtlsWrapper().setDebug(true);
         client.getFlow()
                 .map(String::new)
                 .doOnNext(s -> System.out.println("client.in: " + s))
                 .subscribe(clientTestObs);
-        
-        client.openConnection()
+                
+        client.observeStatus()
                 .doOnComplete(() -> System.out.println("CLIENT CONNECTION CLOSED"))
                 .subscribe(ch -> {
                     System.out.println("CLIENT CONNECTED, HANDSHAKE FINISHED");
@@ -108,7 +106,7 @@ public class DtlsChannelWrapperTest {
                     ch.onNext(CLIENT_HELLO[2].getBytes());
                     ch.close();
                 });
-       
+        
         clientTestObs
                 .awaitCount(3)
                 .assertValueCount(3)

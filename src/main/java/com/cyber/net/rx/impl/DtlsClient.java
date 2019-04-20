@@ -43,7 +43,7 @@ public class DtlsClient {
     public static DtlsChannel connect(SSLContext context, SocketAddress remoteSocketAddress) throws SocketException, SSLException{
         UdpTransport udp = UdpTransport.connect( remoteSocketAddress );
         DtlsChannel ch = new DtlsChannel( context, udp.getWriter().getWriterFor(remoteSocketAddress));
-        ch.getDtlsWrapper().useClientMode();
+        ch.getDtlsAdapter().useClientMode();
 
         udp.getFlow()
             .map(p -> p.getData())
