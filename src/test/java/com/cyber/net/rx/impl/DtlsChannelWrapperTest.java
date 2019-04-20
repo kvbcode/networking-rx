@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 Kirill Bereznyakov.
@@ -24,6 +24,8 @@
 package com.cyber.net.rx.impl;
 
 import com.cyber.net.rx.DtlsChannel;
+import static com.cyber.net.rx.impl.DtlsServerTest.PORT;
+import static com.cyber.net.rx.impl.DtlsServerTest.context;
 import com.cyber.net.ssl.SSLContextFactory;
 import io.reactivex.observers.TestObserver;
 import java.security.NoSuchAlgorithmException;
@@ -37,8 +39,7 @@ import static org.junit.Assert.*;
  *
  * @author Kirill Bereznyakov
  */
-public class DtlsServerTest {
-    
+public class DtlsChannelWrapperTest {
     public static final int PORT = 15555;
     static SSLContext context;
     static String SERVER_HELLO = "server hello";
@@ -57,7 +58,7 @@ public class DtlsServerTest {
         }
     }
     
-    public DtlsServerTest() {
+    public DtlsChannelWrapperTest() {
     }
     
     @Before
@@ -67,56 +68,53 @@ public class DtlsServerTest {
     @After
     public void tearDown() {
     }
-    
-    @Test    
-    public void testDtlsClientServerConnection() throws Exception{
-        System.out.println("testDtlsClientServerConnection()");
+
+    @Test
+    public void testDtlsChannelWrapper() throws Exception{
+        System.out.println("testDtlsChannelWrapper()");
         
-        TestObserver<String> clientTestObs = new TestObserver<>();
-        TestObserver<String> serverTestObs = new TestObserver<>();
-                
-        DtlsServer server = new DtlsServer(context, PORT);        
+        UdpServer server = new UdpServer(PORT);
         
         server.observeConnection()
-                .subscribe(ch -> {
-                    //((DtlsChannel)ch).getDtlsWrapper().setDebug(true);
-                    System.out.println("server.new connection: " + ch);
+                .subscribe(udpCh -> {
+                    DtlsChannel ch = DtlsChannelWrapper.asServer(context, udpCh);
+                    ch.observeStatus()
+                            .doOnComplete(() -> System.out.println("SERVER CONNECTION CLOSED") )
+                            .subscribe(conn -> System.out.println("SERVER CONNECTED, HANDSHAKE FINISHED") );
+                    
+                    //ch.setDebug(true);
                     ch.getFlow()
-                        .map(String::new)
-                        .doOnNext(s -> {
-                            System.out.println("server.ch.in: " + s);
-                            ch.onNext(SERVER_HELLO.getBytes());                            
-                        })
-                        .subscribe(serverTestObs);
-                });
+                            .doOnNext(data -> System.out.println("server.in: " + new String(data)))
+                            .doOnComplete(() -> System.out.println("server.in: channel closed"))
+                            .subscribeWith(ch);
+                    
+                });        
         
-        DtlsChannel client = DtlsClient.connect(context, "127.0.0.1", PORT);
-        //client.getDtlsWrapper().setDebug(true);
-           
+        TestObserver<String> clientTestObs = new TestObserver<>();
+                
+        DtlsChannel client = DtlsChannelWrapper.asClient(context, UdpClient.connect("127.0.0.1", PORT));
+        //client.setDebug(true);
         client.getFlow()
                 .map(String::new)
                 .doOnNext(s -> System.out.println("client.in: " + s))
                 .subscribe(clientTestObs);
         
-        client.onNext(new byte[0]);
-        Thread.sleep(200);
-        client.onNext(CLIENT_HELLO[0].getBytes());
-        client.onNext(CLIENT_HELLO[1].getBytes());
-        client.onNext(CLIENT_HELLO[2].getBytes());
-        
-        Thread.sleep(100);
-
-        serverTestObs
-                .assertValueCount(3)
-                .assertValuesOnly(CLIENT_HELLO[0], CLIENT_HELLO[1], CLIENT_HELLO[2]);
-                
-        
+        client.openConnection()
+                .doOnComplete(() -> System.out.println("CLIENT CONNECTION CLOSED"))
+                .subscribe(ch -> {
+                    System.out.println("CLIENT CONNECTED, HANDSHAKE FINISHED");
+                    ch.onNext(CLIENT_HELLO[0].getBytes());
+                    ch.onNext(CLIENT_HELLO[1].getBytes());
+                    ch.onNext(CLIENT_HELLO[2].getBytes());
+                    ch.close();
+                });
+       
         clientTestObs
+                .awaitCount(3)
                 .assertValueCount(3)
-                .assertValuesOnly(SERVER_HELLO, SERVER_HELLO, SERVER_HELLO);
-                
+                .assertValuesOnly(CLIENT_HELLO[0], CLIENT_HELLO[1], CLIENT_HELLO[2]);        
+        
         server.close();
-        client.close();
-    }
+    }    
     
 }

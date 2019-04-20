@@ -45,7 +45,11 @@ public class UdpSocketWriter implements IFlowConsumer<RawPacket>{
     public DatagramSocket getLocalSocket() {
         return localSocket;
     }
-        
+
+    public IOutputWriter getWriterFor(SocketAddress remoteSocketAddress){
+        return data -> send(data, remoteSocketAddress);
+    }
+    
     public void send(RawPacket packet){
         send(packet.getData(), packet.getRemoteSocketAddress());
     }

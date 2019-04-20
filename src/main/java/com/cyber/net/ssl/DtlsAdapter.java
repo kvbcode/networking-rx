@@ -42,7 +42,7 @@ import javax.net.ssl.SSLEngineResult.Status;
  *
  * @author Kirill Bereznyakov
  */
-public class DtlsWrapper{
+public class DtlsAdapter{
 
     private final SSLEngine ssl;
     private String mode;
@@ -52,10 +52,12 @@ public class DtlsWrapper{
 
     private boolean isHandshakeFinished = false;
     private int handshakeStepCounter = 0;
-    private Consumer<byte[]> outputHandler;
+    private Consumer<byte[]> outputWriter;
+    private Runnable onConnectedListener;
+    private Runnable onClosedListener;
     
-    public DtlsWrapper(SSLContext sslContext) throws SSLException{
-        ssl = sslContext.createSSLEngine();        
+    public DtlsAdapter(SSLContext sslContext) throws SSLException{
+        ssl = sslContext.createSSLEngine();
     }    
 
     public void useServerMode() throws SSLException{
@@ -91,7 +93,9 @@ public class DtlsWrapper{
     
     public SSLEngineResult unwrap(ByteBuffer src, ByteBuffer dst) throws SSLException{
         SSLEngineResult result = ssl.unwrap(src, dst);
-        if (debug) System.out.println(mode + " unwrap: " + result.toString().replace("\n", ", "));        
+        if (debug) System.out.println(mode + " unwrap: " + result.toString().replace("\n", ", "));
+        
+        if (result.getStatus()==Status.CLOSED && onClosedListener!=null) onClosedListener.run();
         return result;
     }    
 
@@ -167,13 +171,8 @@ public class DtlsWrapper{
         return outputBuffer;
     }
     
-    /**
-     * Истина, когда завершена последовательность Handshake и есть готовность
-     * работы с пользовательскими данными.
-     * @return boolean
-     */
-    public boolean isHandshakeFinished(){
-        return isHandshakeFinished;
+    public boolean isHandshaking(){
+        return !isHandshakeFinished;
     }
     
     public SSLEngine getSSLEngine(){
@@ -183,7 +182,7 @@ public class DtlsWrapper{
     public void setDebug(boolean value){
         this.debug = value;
     }
-    
+        
     /**
      * Метод обработки данных при согласовании (Handshake). Вызывается каждый раз
      * при поступлении новой порции данных.
@@ -192,7 +191,7 @@ public class DtlsWrapper{
      * @return
      * @throws SSLException 
      */
-    public HandshakeStatus doHandshakeStep(ByteBuffer input, ByteBuffer output) throws SSLException{
+    public HandshakeStatus handleConnectionData(ByteBuffer input, ByteBuffer output) throws SSLException{
         SSLEngineResult result = null;
         HandshakeStatus hs;
         handshakeStepCounter++;
@@ -214,31 +213,49 @@ public class DtlsWrapper{
                     break;
                 case NOT_HANDSHAKING:
                     if (!isHandshakeFinished && result!=null && result.getHandshakeStatus()==FINISHED){
-                        isHandshakeFinished = true;
-                        handleOutput(output);
+                            isHandshakeFinished = true;
+                            writeOutput(output);
+                            if (onConnectedListener!=null) onConnectedListener.run();
                     };
                     return hs;
-            }
+                }
             
         }while(result!=null && result.getStatus()==Status.OK);                
         
-        handleOutput(output);
+        writeOutput(output);
         
         return hs;
     }
+
+    public SSLEngineResult sendServiceData() throws SSLException{
+        SSLEngineResult result = wrap(ByteBuffer.allocate(0), getOutputBuffer().clear());
+        writeOutput(outputBuffer);
+        return result;
+    }    
     
-    private void handleOutput(ByteBuffer output){
-        if (outputHandler!=null && output.position()>0){
-            if (debug) System.out.println(mode + " handle output: " + output);
-            byte[] buf = new byte[output.flip().limit()];
-            output.get(buf);
-            outputHandler.accept(buf);
-            output.clear();
+    protected void writeOutput(ByteBuffer output){
+        if (outputWriter!=null){
+            if (output.position()>0){
+                if (debug) System.out.println(mode + " handle output: " + output);
+                byte[] buf = new byte[output.flip().limit()];
+                output.get(buf);
+                outputWriter.accept(buf);
+                output.clear();
+            }
+        }else{
+            if (debug) System.out.println(mode + " output handler is null");        
         }
     }
     
-    public void setOutputHandler(Consumer<byte[]> outputHandler){
-        this.outputHandler = outputHandler;
+    public void setOutputWriter(Consumer<byte[]> outputWriter){
+        this.outputWriter = outputWriter;
     }
     
+    public void setOnConnectedListener(Runnable listener){
+        onConnectedListener = listener;
+    }
+    
+    public void setOnClosedListener(Runnable listener){
+        onClosedListener = listener;
+    }
 }

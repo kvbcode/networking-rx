@@ -23,12 +23,13 @@
  */
 package com.cyber.net.rx;
 
-import com.cyber.net.ssl.DtlsWrapper;
+import com.cyber.net.ssl.DtlsAdapter;
 import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
-import java.net.SocketAddress;
+import io.reactivex.subjects.PublishSubject;
 import java.nio.ByteBuffer;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLException;
 
 /**
@@ -36,34 +37,49 @@ import javax.net.ssl.SSLException;
  * @author Kirill Bereznyakov
  */
 public class DtlsChannel extends UdpChannel{
+    protected static final int OUTPUT_BUFFER_SIZE = 65000;
 
-    protected final DtlsWrapper dtls;
-    protected final ByteBuffer outputBuffer;
-    protected final int OUTPUT_BUFFER_SIZE = 65000;
+    protected final DtlsAdapter dtls;
+    protected final ByteBuffer channelOutputBuffer;
+    protected final PublishSubject<DtlsChannel> obsConnectionStatus = PublishSubject.create();
     
-    public DtlsChannel(SSLContext context, UdpSocketWriter writer, SocketAddress remoteSocketAddress) {
-        super(writer, remoteSocketAddress);
+    public DtlsChannel(SSLContext context, IOutputWriter outputWriter) {
+        super(outputWriter);
         
         try{
-            dtls = new DtlsWrapper(context);
+            dtls = new DtlsAdapter(context);
         }catch(SSLException e){
             throw new RuntimeException("DtlsChannel SSL error: " + e.getMessage());
         }
             
-        outputBuffer = ByteBuffer.allocateDirect(OUTPUT_BUFFER_SIZE);
-        dtls.setOutputHandler(dataOut -> super.onNext(dataOut));        
+        channelOutputBuffer = ByteBuffer.allocateDirect(OUTPUT_BUFFER_SIZE);
+        dtls.setOutputWriter(super::onNext);
+        dtls.setOnConnectedListener( () -> obsConnectionStatus.onNext(this) );
+        dtls.setOnClosedListener( () -> obsConnectionStatus.onComplete() );
         
-        flow = flow.flatMap(input -> {
-                if (!dtls.isHandshakeFinished()){
-                    dtls.doHandshakeStep(ByteBuffer.wrap(input), outputBuffer.clear());
+        flow = flow.compose(getDtlsConnectionHandler(dtls, channelOutputBuffer) );
+    }
+
+    public static ObservableTransformer<byte[], byte[]> getDtlsConnectionHandler(DtlsAdapter dtls, ByteBuffer channelOutputBuffer){
+        return obs -> obs
+            .flatMap(input -> {
+                if (dtls.isHandshaking()){
+                    dtls.handleConnectionData(ByteBuffer.wrap(input), channelOutputBuffer.clear());
                     return Observable.empty();
-                }                
+                }
                 if (input.length==0) return Observable.empty();
-                return Observable.just(dtls.decrypt(input));
+                
+                SSLEngineResult result = dtls.unwrap(ByteBuffer.wrap(input), channelOutputBuffer.clear());
+                if (result.bytesProduced()==0) return Observable.empty();
+                
+                byte[] decryptedData = new byte[channelOutputBuffer.flip().limit()];
+                channelOutputBuffer.get(decryptedData);
+                
+                return Observable.just(decryptedData);                
             });
     }
     
-    public DtlsWrapper getDtlsWrapper(){
+    public DtlsAdapter getDtlsWrapper(){
         return dtls;
     }
     
@@ -75,5 +91,31 @@ public class DtlsChannel extends UdpChannel{
             super.onError(e);
         }
     }        
+    
+    @Override
+    public void close(){
+        dtls.getSSLEngine().closeOutbound();
+        try{
+            dtls.sendServiceData();
+        }catch(SSLException e){
+            onError(e);
+        }
+        obsConnectionStatus.onComplete();
+    }
+    
+    /**
+     * Возвращает DtlsChannel в случае подключения и успешного завершения рукопожатия.
+     * При закрытии канала вернет onComplete()
+     * @return 
+     */
+    public Observable<DtlsChannel> observeStatus(){
+        return obsConnectionStatus;
+    }
+
+    public Observable<DtlsChannel> openConnection() throws SSLException{
+        dtls.sendServiceData();
+        return observeStatus();
+    }
+
     
 }

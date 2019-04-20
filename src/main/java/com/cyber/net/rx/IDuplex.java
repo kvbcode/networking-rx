@@ -27,6 +27,6 @@ package com.cyber.net.rx;
  *
  * @author Kirill Bereznyakov
  */
-public interface IDuplexFlowSource<T> extends IFlowSource<T>, IFlowConsumer<T>{        
+public interface IDuplex<T> extends IFlowSource<T>, IFlowConsumer<T>{        
     
 }

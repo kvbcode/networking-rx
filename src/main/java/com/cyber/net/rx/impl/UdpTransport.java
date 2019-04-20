@@ -32,13 +32,13 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import com.cyber.net.rx.IDuplexFlowSource;
+import com.cyber.net.rx.IDuplex;
 
 /**
  *
  * @author Kirill Bereznyakov
  */
-public class UdpTransport implements IDuplexFlowSource<RawPacket>{
+public class UdpTransport implements IDuplex<RawPacket>{
 
     private final DatagramSocket localSocket;
     private final UdpSocketReader reader;

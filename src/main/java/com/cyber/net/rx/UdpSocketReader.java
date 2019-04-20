@@ -74,8 +74,8 @@ public class UdpSocketReader implements IFlowSource<RawPacket>, Runnable{
                 flow.onNext( receiveRawPacket() );
             }
         }catch(SocketException ex){
-            if (!flow.hasComplete()) flow.onError(ex);
-        }catch(IOException ex){   
+            if (!shutdown) flow.onError(ex);
+        }catch(IOException ex){ 
             flow.onError(ex);
         }finally{
             flow.onComplete();

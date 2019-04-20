@@ -42,7 +42,7 @@ public class UdpChannelFactory implements IChannelFactory<UdpChannel>{
     
     @Override
     public UdpChannel get(SocketAddress remoteAddress){
-        UdpChannel conn = new UdpChannel(writer, remoteAddress);
+        UdpChannel conn = new UdpChannel( writer.getWriterFor(remoteAddress) );
         flow.onNext(conn);
         return conn;
     }

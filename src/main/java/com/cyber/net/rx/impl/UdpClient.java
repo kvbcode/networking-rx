@@ -40,11 +40,11 @@ public class UdpClient {
 
     public static UdpChannel connect(SocketAddress remoteSocketAddress) throws SocketException{
         UdpTransport udp = UdpTransport.connect( remoteSocketAddress );        
-        UdpChannel ch = new UdpChannel( udp.getWriter(), remoteSocketAddress );
+        UdpChannel ch = new UdpChannel( udp.getWriter().getWriterFor(remoteSocketAddress) );
 
         udp.getFlow()
             .map(p -> p.getData())
-            .subscribe(dataIn -> ch.accept(dataIn));
+            .subscribe( ch::accept, ch::onError, ch::onComplete);
         
         return ch;
     }

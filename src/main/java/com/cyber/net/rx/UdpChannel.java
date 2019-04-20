@@ -26,7 +26,6 @@ package com.cyber.net.rx;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
-import java.net.SocketAddress;
 
 /**
  *
@@ -34,17 +33,14 @@ import java.net.SocketAddress;
  */
 public class UdpChannel implements IChannel{
 
-    private final UdpSocketWriter writer;    
-    private final SocketAddress remoteSocketAddress;
     private volatile long lastActivityNanos;
         
     protected final PublishSubject<byte[]> downstream = PublishSubject.create();
     protected Observable<byte[]> flow = downstream;
+    protected final IOutputWriter outputWriter;
     
-    public UdpChannel(UdpSocketWriter writer, SocketAddress remoteSocketAddress){
-        this.writer = writer;
-        this.remoteSocketAddress = remoteSocketAddress; 
-        
+    public UdpChannel(IOutputWriter outputWriter){        
+        this.outputWriter = outputWriter;
         downstream.subscribe((data) -> this.updateActivityNanos());
     }
 
@@ -56,31 +52,42 @@ public class UdpChannel implements IChannel{
     public long getLastActivityNanos() {
         return lastActivityNanos;
     }        
-    
+        
     @Override
     public void close(){
         downstream.onComplete();
     }
     
-    protected void send(byte[] data) {
-        writer.send(data, remoteSocketAddress);
-    }
-
     @Override
     public String toString(){
-        return this.getClass().getSimpleName() + "[" + remoteSocketAddress + "]";
+        return this.getClass().getSimpleName();
     }
 
+    /**
+     * Принимает данные и помещает во входящую очередь
+     * @param dataIn 
+     */
     @Override public void accept(byte[] dataIn){ downstream.onNext(dataIn); }
 
-    @Override public void onNext(byte[] dataOut) { send(dataOut); }
+    /**
+     * Принимает данные для отправки через {@link #outputWriter}
+     * @param dataOut 
+     */
+    @Override public void onNext(byte[] dataOut) { outputWriter.accept(dataOut); }
 
+    /**
+     * Возвращает входящую очередь
+     * @return 
+     */
     @Override public Observable<byte[]> getFlow() { return flow; }
 
     @Override public void onSubscribe(Disposable d) { }
 
     @Override public void onError(Throwable e) { }
 
+    /**
+     * Исполняется при закрытии канала
+     */
     @Override public void onComplete() { }
 
 }

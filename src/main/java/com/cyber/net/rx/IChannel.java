@@ -27,7 +27,7 @@ package com.cyber.net.rx;
  *
  * @author Kirill Bereznyakov
  */
-public interface IChannel extends IDuplexFlowSource<byte[]>{
+public interface IChannel extends IDuplex<byte[]>{
     
     public long getLastActivityNanos();
     

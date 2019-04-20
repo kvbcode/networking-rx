@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 Kirill Bereznyakov.
@@ -21,40 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.cyber.net.rx.impl;
+package com.cyber.net.rx;
 
-import com.cyber.net.rx.DtlsChannel;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
+import java.util.function.Consumer;
 
 /**
  *
  * @author Kirill Bereznyakov
  */
-public class DtlsClient {
-
-    private DtlsClient(){
-
-    }
-
-    public static DtlsChannel connect(SSLContext context, SocketAddress remoteSocketAddress) throws SocketException, SSLException{
-        UdpTransport udp = UdpTransport.connect( remoteSocketAddress );
-        DtlsChannel ch = new DtlsChannel( context, udp.getWriter().getWriterFor(remoteSocketAddress));
-        ch.getDtlsWrapper().useClientMode();
-
-        udp.getFlow()
-            .map(p -> p.getData())
-            .subscribe( ch::accept, ch::onError, ch::onComplete );
-        
-        return ch;
-    }
-
-    public static DtlsChannel connect(SSLContext context, String host, int port) throws SocketException, SSLException{
-        return DtlsClient.connect( context, new InetSocketAddress( host, port ) );        
-    }
-    
+public interface IOutputWriter extends Consumer<byte[]>{
     
 }

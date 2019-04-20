@@ -23,6 +23,7 @@
  */
 package com.cyber.net.rx;
 
+import io.reactivex.Observable;
 import java.net.SocketAddress;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -34,7 +35,7 @@ import javax.net.ssl.SSLException;
 public class DtlsChannelFactory extends UdpChannelFactory{
 
     protected final SSLContext context;
-        
+
     public DtlsChannelFactory(SSLContext context, UdpSocketWriter writer){
         super(writer);
         this.context = context;
@@ -42,7 +43,7 @@ public class DtlsChannelFactory extends UdpChannelFactory{
 
     @Override
     public DtlsChannel get(SocketAddress remoteAddress){
-        DtlsChannel conn = new DtlsChannel(context, writer, remoteAddress);
+        DtlsChannel conn = new DtlsChannel(context, writer.getWriterFor(remoteAddress));
         try{
             conn.getDtlsWrapper().useServerMode();
             flow.onNext(conn);
@@ -50,7 +51,11 @@ public class DtlsChannelFactory extends UdpChannelFactory{
             flow.onError(e);
         }
         return conn;
+    }    
+
+    @Override
+    public Observable<UdpChannel> getFlow() {
+        return flow;
     }
-    
     
 }
